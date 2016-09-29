@@ -134,7 +134,7 @@ class RecipeEp(APIView):
                 oldRecipeIngredient.quantity = newRecipeIngredient['quantity']
                        
             try:
-                 ingredient = Ingredient.objects.get(name=newRecipeIngredient['ingredient'])
+                 ingredient = Ingredient.objects.get(name=newRecipeIngredient['ingredient'], user=user)
                  #print 'old ingredient :'+ingredient.name
             except Ingredient.DoesNotExist:
                  ingredient = Ingredient(name=newRecipeIngredient['ingredient'], user=user)                 
