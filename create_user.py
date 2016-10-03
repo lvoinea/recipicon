@@ -6,7 +6,7 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'recipicon.settings'
 import django
 django.setup()
 
-from api.models import Recipe, RecipeIngredient, Ingredient
+from api.models import Recipe, RecipeIngredient, Ingredient, UserProfile
 from django.contrib.auth.models import User
 
 user = raw_input('User:')
@@ -16,6 +16,9 @@ password = raw_input('Password:')
 #--- Create user
 user = User.objects.create_user(user, email, password)
 user.save()
+
+userProfile = UserProfile(user = user)
+userProfile.save()
 
 #--- Create ingredients
 coffee = Ingredient(name = 'coffee', user = user)

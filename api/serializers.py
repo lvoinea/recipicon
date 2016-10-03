@@ -1,5 +1,10 @@
-from .models import Recipe, Ingredient, RecipeIngredient, Shop, ShoppingList, UserProfile
+from .models import Recipe, Ingredient, RecipeIngredient, Shop, ShoppingList, ShoppingItem, UserProfile
 from rest_framework import serializers
+
+class IngredientSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ingredient
+        fields = ('name',)
 
 class RecipeSerializer(serializers.ModelSerializer):
     
@@ -24,22 +29,35 @@ class FullRecipeSerializer(serializers.ModelSerializer):
         model = Recipe
         fields = ('id','name', 'category', 'duration', 'serves', 'description','recipe_ingredients')
         
-class IngredientSerializer(serializers.ModelSerializer):
+class ShoppingItemSerializer(serializers.ModelSerializer):
+
+    ingredient = serializers.ReadOnlyField(source='ingredient.name')
+    recipe = FullRecipeSerializer(read_only=True)
+
     class Meta:
-        model = Ingredient
-        fields = ('name',)
+        model = ShoppingItem
+        fields = ('id', 'unit', 'quantity', 'ingredient', 'recipe')
         
+class ShoppingListSerializer(serializers.ModelSerializer):
+
+    items = ShoppingItemSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = ShoppingList
+        fields = ('id', 'name', 'date', 'items')
+ 
 class ShopSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
         fields = ('name')
-        
-class ShoppingListSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ShoppingList
-        fields = ('name','date')
-
+ 
 class UserProfileSerializer(serializers.ModelSerializer):
+
+    user = serializers.ReadOnlyField(source='user.username')
+    shop = ShopSerializer(read_only=True)
+    shoppingList = serializers.ReadOnlyField(source='shoppingList.id')
+
     class Meta:
         model = UserProfile
         fields = ('user','shop','shoppingList')
+        
