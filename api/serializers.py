@@ -12,7 +12,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Recipe
-        fields = ('id','name', 'category', 'duration', 'serves', 'description','user')
+        fields = ('id','name', 'category', 'duration', 'serves', 'description','user','in_shopping_list')
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
     ingredient = serializers.ReadOnlyField(source='ingredient.name')

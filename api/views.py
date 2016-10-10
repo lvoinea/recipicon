@@ -59,6 +59,20 @@ class RecipeListEp(APIView):
         #return recipes
         user = self.request.user
         recipes = Recipe.objects.filter(user__username=user.username)
+        recipeIds = [recipe.id for recipe in recipes]
+        
+        # get shopping list
+        userProfile = get_object_or_404(UserProfile,user__username=user.username)            
+        shoppingList = userProfile.shoppingList
+        items = shoppingList.items.filter(recipe_id__in = recipeIds)
+        
+        selectedRecipeIds = set([item.recipe.id for item in items])
+        for recipe in recipes:
+            if recipe.id in selectedRecipeIds:
+                recipe.in_shopping_list = True
+            else:
+                recipe.in_shopping_list = False
+        
         serializer = RecipeSerializer(recipes, many=True)
         return Response(serializer.data)   
         
@@ -256,14 +270,10 @@ class ShoppingListEp(APIView):
         serializer = ShoppingListSerializer(shoppingList)
         return Response(serializer.data)  
         
-#TODO: Add an endpoint that adds a recipe to the current shopping list
-# /shopping-list/_/recipe/2
-# current implementation uses only _ but one could make it generic
-# the body contains the command: add / remove
 class ShoppingRecipeItemEp(APIView):
     permission_classes = (IsAuthenticated,IsOwner)
 
-    # use shoppingListId = '_' to search for recipe in hte current shopping list
+    # use shoppingListId = '_' to search for recipe in the current shopping list
     def get(self, request, shoppingListId, recipeId, format=None):
         
         result = False
