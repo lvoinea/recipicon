@@ -22,6 +22,9 @@ class Recipe(models.Model):
     def __str__(self):
         return self.name
         
+    def in_shopping_list(self):
+        pass
+        
 @python_2_unicode_compatible         
 class Ingredient(models.Model):
     name = models.CharField(max_length=32)

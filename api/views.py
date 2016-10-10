@@ -1,4 +1,4 @@
-from .models import Recipe, RecipeIngredient, Ingredient, ShoppingList, UserProfile
+from .models import Recipe, RecipeIngredient, Ingredient, ShoppingList, ShoppingItem, UserProfile
 from .serializers import RecipeSerializer, FullRecipeSerializer, IngredientSerializer, ShoppingListSerializer
 from .permissions import IsOwner
 from .authentications import CsrfExemptTokenAuthentication
@@ -65,10 +65,21 @@ class RecipeListEp(APIView):
 class RecipeEp(APIView):
     permission_classes = (IsAuthenticated, IsOwner,)
     
+    #return recipe together with ingredients and presence in the shopping list
     def get(self, request, recipeId, format=None):    
-        #return recipe together with ingredients?
+        
         recipe = get_object_or_404(Recipe, pk=recipeId)
         self.check_object_permissions(self.request, recipe)
+        
+        # Check if the recipe is in the current shopping list
+        recipe.in_shopping_list = False        
+        user = self.request.user
+        userProfile = get_object_or_404(UserProfile,user__username=user.username)            
+        shoppingList = userProfile.shoppingList
+        items = shoppingList.items.filter(recipe_id = recipeId)
+        if (len(items) == 1):
+            recipe.in_shopping_list = True       
+        
         serializer = FullRecipeSerializer(recipe)
         return Response(serializer.data)
         
@@ -152,6 +163,7 @@ class IngredientsEp(APIView):
 class ShoppingListEp(APIView):
     permission_classes = (IsAuthenticated,IsOwner)
     
+    # Use id = '_' to get thhe current shopping list from the user profile
     def get(self, request, shoppingListId, format=None):
         if (shoppingListId == '_'):
             user = self.request.user
@@ -164,8 +176,8 @@ class ShoppingListEp(APIView):
         serializer = ShoppingListSerializer(shoppingList)
         return Response(serializer.data)
     
+    # Use id = '_' to create a new shopping list and register it in the user profile 
     def post(self, request, shoppingListId, format=None):    
-    
         user = self.request.user
         
         newShoppingList = request.data;        
@@ -204,9 +216,12 @@ class ShoppingListEp(APIView):
                     
                 shoppingItem.unit = newItem['unit']
                 shoppingItem.quantity = newItem['quantity']                
+                # ingredient items are created if they do not exist already
                 if (newItem['ingredient'] is not None):
                     shoppingItem.recipe = None;
                     shoppingItem.ingredient = Utils.getSetIngredient(newItem['ingredient'], user)
+                # recipe items have to exist already or an error will be raised
+                # 10.10.2016: this assumes shoppping lists can be edited by adding recipes - currently not used
                 elif (newItem['recipe'] is not None):
                     shoppingItem.ingredient = None
                     shoppingItem.recipe = get_object_or_404(Recipe, pk=newItem['recipe']['id'])
@@ -222,12 +237,14 @@ class ShoppingListEp(APIView):
             userProfile.shoppingList = shoppingList
             userProfile.save()   
             
-            # Clone all items (if any)
+            # Clone all items (if any) - can be used to create a new shopping list starting from an old one
             for newItem in newShoppingList['items']:
                 shoppingItem = ShoppingItem(unit = newItem['unit'], quantity = newItem['quantity'], shoppingList = shoppingList)
+                # ingredient items are created if they do not exist already
                 if (newItem['ingredient'] is not None):
                     shoppingItem.recipe = None;
                     shoppingItem.ingredient = Utils.getSetIngredient(newItem['ingredient'], user)
+                # recipe items have to exist already or an error will be raised
                 elif (newItem['recipe'] is not None):
                     shoppingItem.ingredient = None
                     shoppingItem.recipe = get_object_or_404(Recipe, pk=newItem['recipe']['id'])
@@ -239,6 +256,76 @@ class ShoppingListEp(APIView):
         serializer = ShoppingListSerializer(shoppingList)
         return Response(serializer.data)  
         
+#TODO: Add an endpoint that adds a recipe to the current shopping list
+# /shopping-list/_/recipe/2
+# current implementation uses only _ but one could make it generic
+# the body contains the command: add / remove
+class ShoppingRecipeItemEp(APIView):
+    permission_classes = (IsAuthenticated,IsOwner)
+
+    # use shoppingListId = '_' to search for recipe in hte current shopping list
+    def get(self, request, shoppingListId, recipeId, format=None):
+        
+        result = False
+        user = self.request.user
+        
+        # get shopping list
+        if (shoppingListId == '_'):  
+            userProfile = get_object_or_404(UserProfile,user__username=user.username)            
+            shoppingList = userProfile.shoppingList
+        else:
+            shoppingList = get_object_or_404(ShoppingList, pk=shoppingListId)
+        self.check_object_permissions(self.request, shoppingList)
+            
+        # find item
+        items = shoppingList.items.filter(recipe_id = recipeId)
+        if (len(items) == 1):
+            result = True
+            
+        return Response(result)
+        
+    def post(self, request, shoppingListId, recipeId, format=None):
+        command = request.data        
+        
+        if not Utils.isValidShoppingItemCmd(command):
+            return Response('Unkonwn command format.', status=status.HTTP_400_BAD_REQUEST)
+        
+        # get shopping list
+        user = self.request.user
+        if (shoppingListId == '_'):  
+            userProfile = get_object_or_404(UserProfile,user__username=user.username)            
+            shoppingList = userProfile.shoppingList
+        else:
+            shoppingList = get_object_or_404(ShoppingList, pk=shoppingListId)
+        self.check_object_permissions(self.request, shoppingList)
+        
+        # find shopping item
+        shoppingItem = None
+        items = shoppingList.items.filter(recipe_id = recipeId)
+        if (len(items) == 1):
+            shoppingItem = items[0]
+        
+        response = None
+        if (command['action'] == 'add'):
+            if shoppingItem is not None:
+                response = 'already in list'
+            else:
+                shoppingItem = ShoppingItem(shoppingList = shoppingList)
+                shoppingItem.ingredient = None
+                shoppingItem.recipe = get_object_or_404(Recipe, pk=recipeId)
+                shoppingItem.save()
+                response = 'added'
+        elif (command['action'] == 'remove'):
+            if shoppingItem is None:
+                response = 'not in list'                
+            else:
+                shoppingItem.delete()
+                response = 'removed'
+        else:
+            return Response('Unkonwn command: '+ str(command['action']), status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response(response) 
+
 class Utils():
 
     @staticmethod
@@ -247,7 +334,7 @@ class Utils():
     
     @staticmethod
     def isValidRecipe(recipe):
-        return set(recipe.keys()).issubset(set(['id', 'name', 'category', 'description', 'serves', 'duration', 'recipe_ingredients']))
+        return set(recipe.keys()).issubset(set(['id', 'name', 'category', 'description', 'serves', 'duration', 'recipe_ingredients','in_shopping_list']))
      
     @staticmethod
     def isValidShoppingList(shoppingList):
@@ -256,14 +343,19 @@ class Utils():
     @staticmethod
     def isValidShoppingItem(shoppingItem):
         return set(shoppingItem.keys()).issubset(set(['id', 'unit', 'quantity', 'ingredient', 'recipe']))
+
+    @staticmethod
+    def isValidShoppingItemCmd(shoppingItem):
+        return set(shoppingItem.keys()).issubset(set(['action']))
      
+        
     @staticmethod
     def getSetIngredient(name, user):
         try:
-             ingredient = Ingredient.objects.get(name=newRecipeIngredient['ingredient'], user=user)
+             ingredient = Ingredient.objects.get(name=name, user=user)
              #print 'old ingredient :'+ingredient.name
         except Ingredient.DoesNotExist:
-             ingredient = Ingredient(name=newRecipeIngredient['ingredient'], user=user)                 
+             ingredient = Ingredient(name=name, user=user)                 
              #print 'new ingredient :'+ingredient.name
              ingredient.save()
         return ingredient

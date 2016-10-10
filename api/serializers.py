@@ -24,10 +24,10 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 class FullRecipeSerializer(serializers.ModelSerializer):
     
     recipe_ingredients = RecipeIngredientSerializer(many=True, read_only=True)
-
+    
     class Meta:
         model = Recipe
-        fields = ('id','name', 'category', 'duration', 'serves', 'description','recipe_ingredients')
+        fields = ('id','name', 'category', 'duration', 'serves', 'description','recipe_ingredients','in_shopping_list')
         
 class ShoppingItemSerializer(serializers.ModelSerializer):
 
