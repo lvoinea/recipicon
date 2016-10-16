@@ -348,7 +348,7 @@ class Utils():
      
     @staticmethod
     def isValidShoppingList(shoppingList):
-        return set(shoppingList.keys()).issubset(set(['id','name','items']))
+        return set(shoppingList.keys()).issubset(set(['id', 'name', 'date', 'items']))
      
     @staticmethod
     def isValidShoppingItem(shoppingItem):
