@@ -323,6 +323,8 @@ class ShoppingRecipeItemEp(APIView):
                 shoppingItem = ShoppingItem(shoppingList = shoppingList)
                 shoppingItem.ingredient = None
                 shoppingItem.recipe = get_object_or_404(Recipe, pk=recipeId)
+                shoppingItem.unit = 'serve'
+                shoppingItem.quantity = shoppingItem.recipe.serves
                 shoppingItem.save()
                 response = 'added'
         elif (command['action'] == 'remove'):
