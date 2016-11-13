@@ -71,8 +71,8 @@ class Shop(models.Model):
 class IngredientShop(models.Model):
     location = models.CharField(max_length=32)
     #-- FK
-    ingredient = models.ForeignKey('Ingredient', on_delete = models.CASCADE)
-    shop = models.ForeignKey('Shop', related_name='shop_ingredients', on_delete = models.CASCADE)
+    ingredient = models.ForeignKey('Ingredient', related_name='locations', on_delete = models.CASCADE)
+    shop = models.ForeignKey('Shop', related_name='+', on_delete = models.CASCADE)
 
 
 

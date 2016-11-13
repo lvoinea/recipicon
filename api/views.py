@@ -1,5 +1,5 @@
 from .models import Recipe, RecipeIngredient, Ingredient, ShoppingList, ShoppingItem, UserProfile
-from .serializers import RecipeSerializer, FullRecipeSerializer, IngredientSerializer, ShoppingListSerializer
+from .serializers import RecipeSerializer, FullRecipeSerializer, IngredientSerializer, ShoppingListSerializer, IngredientLocationSerializer
 from .permissions import IsOwner
 from .authentications import CsrfExemptTokenAuthentication
 
@@ -338,6 +338,25 @@ class ShoppingRecipeItemEp(APIView):
         
         return Response(response) 
 
+class IngredientLocationEp(APIView):
+    
+    def get(self, request, ingredientIds, format=None):
+        user = self.request.user
+        ingredientIds = ingredientIds.split(',')
+        ingredients = Ingredient.objects.filter(id__in = ingredientIds)
+        #TODO: check the user is allowed to see them
+        serializer = IngredientLocationSerializer(ingredients, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, format=None):
+        user = self.request.user
+        ingredientLocations = request.data; 
+        print ingredientLocations
+        #TODO: set the ingredient locations as specified
+        #---
+        #TODO: for each ingredient and shop check if the location is changed, and update it if not
+        return Response('ok', status=status.HTTP_200_OK)
+        
 class Utils():
 
     @staticmethod
