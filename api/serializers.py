@@ -49,15 +49,16 @@ class ShoppingListSerializer(serializers.ModelSerializer):
 class ShopSerializer(serializers.ModelSerializer):
     class Meta:
         model = Shop
-        fields = ('name',)
+        fields = ('id','name',)
         
 class LocationSerializer(serializers.ModelSerializer):
 
-    shop = serializers.ReadOnlyField(source='shop.name')
+    #shop = serializers.ReadOnlyField(source='shop.name')
+    shop = ShopSerializer(read_only=True)
 
     class Meta:
         model = IngredientShop
-        fields = ('location','shop')
+        fields = ('id','location','shop')
         
 class IngredientLocationSerializer(serializers.ModelSerializer):
 
