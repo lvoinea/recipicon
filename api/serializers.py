@@ -1,10 +1,10 @@
-from .models import Recipe, Ingredient, RecipeIngredient, Shop, IngredientShop, ShoppingList, ShoppingItem, UserProfile
+from .models import Recipe, Ingredient, RecipeIngredient, Shop, Location, IngredientLocation, ShoppingList, ShoppingItem, UserProfile
 from rest_framework import serializers
 
 class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
-        fields = ('id','name',)        
+        fields = ('id','name')        
 
 class RecipeSerializer(serializers.ModelSerializer):
     
@@ -49,7 +49,7 @@ class ShoppingListSerializer(serializers.ModelSerializer):
 class ShopSerializer(serializers.ModelSerializer):
     class Meta:
         model = Shop
-        fields = ('id','name',)
+        fields = ('id','name')
         
 class LocationSerializer(serializers.ModelSerializer):
 
@@ -57,16 +57,16 @@ class LocationSerializer(serializers.ModelSerializer):
     shop = ShopSerializer(read_only=True)
 
     class Meta:
-        model = IngredientShop
-        fields = ('id','location','shop')
+        model = Location
+        fields = ('id','name','shop')
         
 class IngredientLocationSerializer(serializers.ModelSerializer):
 
-    locations = LocationSerializer(many=True, read_only=True)
+    locations = LocationSerializer(many=True, read_only=True, source='location')
 
     class Meta:
         model = Ingredient
-        fields = ('id', 'name', 'locations')
+        fields = ('id','locations')
  
 class UserProfileSerializer(serializers.ModelSerializer):
 
