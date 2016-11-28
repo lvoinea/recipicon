@@ -8,14 +8,12 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 class RecipeSerializer(serializers.ModelSerializer):
     
-    user = serializers.ReadOnlyField(source='user.username')
-
     class Meta:
         model = Recipe
-        fields = ('id','name', 'category', 'duration', 'serves', 'description','user','in_shopping_list')
+        fields = ('id','name', 'category', 'duration', 'in_shopping_list')
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
-    ingredient = IngredientSerializer()
+    ingredient = serializers.ReadOnlyField(source='ingredient.id')
     
     class Meta:
         model = RecipeIngredient
@@ -53,16 +51,21 @@ class ShopSerializer(serializers.ModelSerializer):
         
 class LocationSerializer(serializers.ModelSerializer):
 
-    #shop = serializers.ReadOnlyField(source='shop.name')
-    shop = ShopSerializer(read_only=True)
+    shop = serializers.ReadOnlyField(source='shop.id')
+    #shop = ShopSerializer(read_only=True)
 
     class Meta:
         model = Location
         fields = ('id','name','shop')
+
+class LocationField(serializers.RelatedField):
+    def to_representation(self, value):        
+        return LocationSerializer(value.location).data
         
 class IngredientLocationSerializer(serializers.ModelSerializer):
 
-    locations = LocationSerializer(many=True, read_only=True, source='location')
+    #locations = LocationField(many=True, read_only=True)
+    locations = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
 
     class Meta:
         model = Ingredient

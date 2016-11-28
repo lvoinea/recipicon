@@ -72,7 +72,7 @@ class Shop(models.Model):
 class Location(models.Model):
     name = models.CharField(max_length=32)
     #-- FK
-    user = models.ForeignKey('auth.User', related_name='+', on_delete = models.CASCADE)
+    user = models.ForeignKey('auth.User', related_name='locations', on_delete = models.CASCADE)
     shop = models.ForeignKey('Shop', related_name='locations', on_delete = models.CASCADE)
     
     def __str__(self):
