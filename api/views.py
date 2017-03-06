@@ -1,4 +1,4 @@
-from .models import Recipe, RecipeIngredient, Ingredient, ShoppingList, ShoppingItem, UserProfile
+from .models import Recipe, RecipeIngredient, Ingredient, ShoppingList, ShoppingItem, UserProfile, IngredientLocation, Shop
 from .serializers import RecipeSerializer, FullRecipeSerializer, IngredientSerializer, ShoppingListSerializer, IngredientLocationSerializer, ShopSerializer, LocationSerializer
 from .permissions import IsOwner
 from .authentications import CsrfExemptTokenAuthentication
@@ -127,27 +127,27 @@ class RecipeEp(APIView):
         oldRecipe.duration = newRecipe['duration']
             
         #------------------------------- Update ingredients 
-        #- Remove deleted ingredients
-        newRecipeIngredients = set([])
+        #- Remove deleted recipe ingredient relations
+        newRecipeIngredientIds = set([])
         for newRecipeIngredient in newRecipe['recipe_ingredients']:          
             if not Utils.isValidRecipeIngredient(newRecipeIngredient):
                 return Response('Unkonwn recipe ingredient data: '+ str(newRecipeIngredient), status=status.HTTP_400_BAD_REQUEST)
             else:
                 newRecipeIngredient['id'] = str(newRecipeIngredient['id'])
-                newRecipeIngredients.add(newRecipeIngredient['id'])
-        #print newRecipeIngredients
+                newRecipeIngredientIds.add(newRecipeIngredient['id'])
+        #print newRecipeIngredientIds
         
         dOldRecipeIngredients = {}
         for oldRecipeIngredient in oldRecipe.recipe_ingredients.all():
             oldRecipeIngredientId = str(oldRecipeIngredient.id)
-            if not oldRecipeIngredientId in newRecipeIngredients:
+            if not oldRecipeIngredientId in newRecipeIngredientIds:
                 oldRecipeIngredient.delete()
                 #print 'delete recipe ingredient :'+ oldRecipeIngredientId
             else:
                 dOldRecipeIngredients[oldRecipeIngredientId] = oldRecipeIngredient
         
         
-        #- Add new ingredients
+        #- Add new recipe ingredient relations
         for newRecipeIngredient in newRecipe['recipe_ingredients']:            
             if newRecipeIngredient['id'].startswith('_'):         
                 oldRecipeIngredient = RecipeIngredient(recipe=oldRecipe)
@@ -161,6 +161,14 @@ class RecipeEp(APIView):
             
         #------------------------------- Save recipe  
         oldRecipe.save()
+        
+        # Check if the recipe is in the current shopping list
+        oldRecipe.in_shopping_list = False        
+        userProfile = get_object_or_404(UserProfile,user__username=user.username)            
+        shoppingList = userProfile.shoppingList
+        items = shoppingList.items.filter(recipe_id = oldRecipe.id)
+        if (len(items) == 1):
+            oldRecipe.in_shopping_list = True
         serializer = FullRecipeSerializer(oldRecipe)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
         
@@ -170,7 +178,7 @@ class IngredientListEp(APIView):
     def get(self, request, format=None):    
         user = self.request.user
         ingredients = user.ingredients
-        serializer = IngredientSerializer(ingredients, many=True)
+        serializer = IngredientLocationSerializer(ingredients, many=True)
         return Response(serializer.data)
         
 class IngredientEp(APIView):
@@ -180,24 +188,32 @@ class IngredientEp(APIView):
         
         user = self.request.user
         ingredient = get_object_or_404(Ingredient, pk=ingredientId)
-        self.check_object_permissions(self.request, recipe)
+        self.check_object_permissions(self.request, ingredient)
         
-        serializer = IngredientSerializer(ingredient)
+        serializer = IngredientLocationSerializer(ingredient)
         return Response(serializer.data)
         
     def post(self, request, ingredientId, format=None):    
         
-        user = self.request.user
-        
-        newIngredient = request.data; 
+        user = self.request.user        
+        newIngredient = request.data
+       
         if not Utils.isValidIngredient(newIngredient):
             return Response('Unkonwn ingredient data', status=status.HTTP_400_BAD_REQUEST)   
         
-        ingredient = Ingredient(user=user)
-        ingredient.name = newIngredient['name'] 
+        if (str(newIngredient['id']).startswith('_')):
+            ingredient = Ingredient(user=user)
+            ingredient.save()
+        else:
+            ingredient = Ingredient.objects.get(id=newIngredient['id'])
+            
+        ingredient.name = newIngredient['name']
+        
+        locations = IngredientLocation.objects.filter(location__id__in= newIngredient['locations'])
+        ingredient.locations.set(locations)   
         ingredient.save()
    
-        serializer = IngredientSerializer(ingredient)
+        serializer = IngredientLocationSerializer(ingredient)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
         
 class ShoppingListEp(APIView):
@@ -364,27 +380,7 @@ class ShoppingRecipeItemEp(APIView):
         
         return Response(response) 
 
-class IngredientLocationEp(APIView):
-    
-    def get(self, request, ingredientIds, format=None):
-        user = self.request.user
-        ingredientIds = ingredientIds.split(',')
-        ingredients = Ingredient.objects.filter(id__in = ingredientIds)
-        #TODO: check the user is allowed to see them
-        serializer = IngredientLocationSerializer(ingredients, many=True)
-        return Response(serializer.data)
-
-    def post(self, request, format=None):
-        user = self.request.user
-        ingredientLocations = request.data; 
-        print ingredientLocations
-        #TODO: set the ingredient locations as specified
-        #---
-        #TODO: for each ingredient and shop check if the location is changed, and update it if not
-        return Response('ok', status=status.HTTP_200_OK)
-
 class ShopListEp(APIView):
-
     permission_classes = (IsAuthenticated,IsOwner)
     
     def get(self, request, format=None):
@@ -393,6 +389,64 @@ class ShopListEp(APIView):
         serializer = ShopSerializer(shops, many=True)
         return Response(serializer.data)
 
+class ShopEp(APIView):
+    permission_classes = (IsAuthenticated,IsOwner)
+    
+    def get(self, request, shopId, format=None):
+    
+        if (shopId == '_'):
+            user = self.request.user
+            userProfile = get_object_or_404(UserProfile,user__username=user.username)            
+            shop = userProfile.shop
+        else:
+            shop = get_object_or_404(Shop, pk=shopId)
+            
+        serializer = ShopSerializer(shop)
+        return Response(serializer.data)
+        
+    def post(self, request, shopId, format=None):
+    
+        user = self.request.user        
+        newShop = request.data
+        
+        if (str(newShop['id']).startswith('_')):
+            shop = Shop(user=user)
+            shop.save()            
+        else:
+            shop = get_object_or_404(Shop, pk=newShop['id'])
+            
+        shop.name = newShop['name']
+        shop.save()
+        
+        serializer = ShopSerializer(shop)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class CurrentShopEp(APIView):
+
+    permission_classes = (IsAuthenticated,IsOwner)
+    
+    def get(self, request, format=None):
+    
+        user = self.request.user
+        userProfile = get_object_or_404(UserProfile,user__username=user.username)            
+        shop = userProfile.shop
+            
+        serializer = ShopSerializer(shop)
+        return Response(serializer.data)
+        
+    def post(self, request, format=None):
+    
+        user = self.request.user        
+        newCurrentShop = request.data
+        
+        shop = get_object_or_404(Shop,pk=newCurrentShop['id'])            
+        userProfile = get_object_or_404(UserProfile,user__username=user.username)
+        userProfile.shop = shop
+        userProfile.save()
+            
+        serializer = ShopSerializer(shop)
+        return Response(serializer.data)
+        
 class LocationListEp(APIView):
 
     permission_classes = (IsAuthenticated,IsOwner)
@@ -411,7 +465,7 @@ class Utils():
     
     @staticmethod
     def isValidIngredient(ingredient):
-        return set(ingredient.keys()).issubset(set(['id', 'name']))
+        return set(ingredient.keys()).issubset(set(['id', 'name', 'locations']))
     
     
     @staticmethod

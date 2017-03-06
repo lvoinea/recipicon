@@ -29,7 +29,7 @@ class FullRecipeSerializer(serializers.ModelSerializer):
         
 class ShoppingItemSerializer(serializers.ModelSerializer):
 
-    ingredient = IngredientSerializer(read_only=True)
+    ingredient = serializers.ReadOnlyField(source='ingredient.id')
     recipe = FullRecipeSerializer(read_only=True)
 
     class Meta:
@@ -69,7 +69,7 @@ class IngredientLocationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Ingredient
-        fields = ('id','locations')
+        fields = ('id','name','locations')
  
 class UserProfileSerializer(serializers.ModelSerializer):
 
