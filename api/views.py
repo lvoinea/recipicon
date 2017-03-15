@@ -1,4 +1,4 @@
-from .models import Recipe, RecipeIngredient, Ingredient, ShoppingList, ShoppingItem, UserProfile, IngredientLocation, Shop
+from .models import Recipe, RecipeIngredient, Ingredient, ShoppingList, ShoppingItem, UserProfile, IngredientLocation, Shop, Location
 from .serializers import RecipeSerializer, FullRecipeSerializer, IngredientSerializer, ShoppingListSerializer, IngredientLocationSerializer, ShopSerializer, LocationSerializer
 from .permissions import IsOwner
 from .authentications import CsrfExemptTokenAuthentication
@@ -215,6 +215,7 @@ class IngredientEp(APIView):
    
         serializer = IngredientLocationSerializer(ingredient)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
         
 class ShoppingListEp(APIView):
     permission_classes = (IsAuthenticated,IsOwner)
@@ -456,6 +457,56 @@ class LocationListEp(APIView):
         locations = user.locations
         serializer = LocationSerializer(locations, many=True)
         return Response(serializer.data)
+        
+class LocationEp(APIView):
+    permission_classes = (IsAuthenticated,IsOwner)
+    
+    def get(self, request, locationId, format=None):
+    
+        try:
+            val = int(locationId)
+        except ValueError:
+            return Response('Unkonwn location', status=status.HTTP_400_BAD_REQUEST)
+        
+        location = get_object_or_404(Location, pk=locationId)
+        self.check_object_permissions(request, location)
+            
+        serializer = LocationSerializer(location)
+        return Response(serializer.data)
+        
+    def post(self, request, locationId, format=None):
+    
+        user = self.request.user        
+        newLocation = request.data
+        
+        shop = get_object_or_404(Shop,pk=newLocation['shop'])
+        self.check_object_permissions(request, shop)
+        
+        if (locationId.startswith('_')):
+            location = Location(user=user,shop=shop)
+            location.save()            
+        else:
+            location = get_object_or_404(Location, pk=locationId)
+            self.check_object_permissions(request, location)
+            location.shop = shop        
+        
+        location.name = newLocation['name']
+        location.save()
+        
+        serializer = LocationSerializer(location)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+    def delete(self, request, locationId, format=None):
+        
+        try:
+            val = int(locationId)
+        except ValueError:
+            return Response('Unkonwn location', status=status.HTTP_400_BAD_REQUEST)    
+    
+        location = get_object_or_404(Location, pk=locationId)
+        self.check_object_permissions(self.request, location)
+        location.delete()
+        return Response(status.HTTP_204_NO_CONTENT)  
         
 class Utils():
 

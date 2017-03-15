@@ -17,6 +17,7 @@ urlpatterns = [
     url(r'^shops', views.ShopListEp.as_view()),
     url(r'^shop/current', views.CurrentShopEp.as_view()), 
     url(r'^shop/(?P<shopId>[_0-9]+)', views.ShopEp.as_view()), 
-    url(r'^locations', views.LocationListEp.as_view()),      
+    url(r'^locations', views.LocationListEp.as_view()), 
+    url(r'^location/(?P<locationId>[_0-9]+)', views.LocationEp.as_view()),     
     url(r'^', include(router.urls)),    
 ]
