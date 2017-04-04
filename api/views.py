@@ -197,6 +197,8 @@ class IngredientEp(APIView):
         
         user = self.request.user        
         newIngredient = request.data
+
+        print newIngredient
        
         if not Utils.isValidIngredient(newIngredient):
             return Response('Unkonwn ingredient data', status=status.HTTP_400_BAD_REQUEST)   
@@ -208,9 +210,30 @@ class IngredientEp(APIView):
             ingredient = Ingredient.objects.get(id=newIngredient['id'])
             
         ingredient.name = newIngredient['name']
-        
-        locations = IngredientLocation.objects.filter(location__id__in= newIngredient['locations'])
-        ingredient.locations.set(locations)   
+
+        #TODO: new locations have to be created if they do not exist
+        # only then they can be added
+
+        locations = Location.objects.filter(id__in = newIngredient['locations']) 
+        newLocationIds = [location.id for location in locations]
+        ingredientLocations = IngredientLocation.objects.filter(location__id= ingredientId)
+        oldLocationIds = [ingredientLocation.location.id for ingredientLocation in ingredientLocations]
+
+        newIngredientLocations = []
+        # delete removed locations
+        for ingredientLocation in ingredientLocations:
+            if not (ingredientLocation.location.id in newLocationIds):
+                ingredientLocation.delete()
+            else:
+                newIngredientLocations.add(ingredientLocation)
+        # add new locations
+        for location in locations:
+            if not (location.id in oldLocationIds):
+                ingredientLocation = IngredientLocation(location = location, ingredient = ingredient)
+                ingredientLocation.save()
+                newIngredientLocations.append(ingredientLocation)
+
+        ingredient.locations.set(newIngredientLocations)
         ingredient.save()
    
         serializer = IngredientLocationSerializer(ingredient)

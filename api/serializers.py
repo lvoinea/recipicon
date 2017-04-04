@@ -60,12 +60,12 @@ class LocationSerializer(serializers.ModelSerializer):
 
 class LocationField(serializers.RelatedField):
     def to_representation(self, value):        
-        return LocationSerializer(value.location).data
+        return value.location.id
         
 class IngredientLocationSerializer(serializers.ModelSerializer):
 
-    #locations = LocationField(many=True, read_only=True)
-    locations = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    locations = LocationField(many=True, read_only=True)
+    #locations = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
 
     class Meta:
         model = Ingredient
