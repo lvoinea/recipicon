@@ -197,8 +197,6 @@ class IngredientEp(APIView):
         
         user = self.request.user        
         newIngredient = request.data
-
-        print newIngredient
        
         if not Utils.isValidIngredient(newIngredient):
             return Response('Unkonwn ingredient data', status=status.HTTP_400_BAD_REQUEST)   
@@ -211,12 +209,9 @@ class IngredientEp(APIView):
             
         ingredient.name = newIngredient['name']
 
-        #TODO: new locations have to be created if they do not exist
-        # only then they can be added
-
         locations = Location.objects.filter(id__in = newIngredient['locations']) 
         newLocationIds = [location.id for location in locations]
-        ingredientLocations = IngredientLocation.objects.filter(location__id= ingredientId)
+        ingredientLocations = IngredientLocation.objects.filter(ingredient__id= ingredientId)
         oldLocationIds = [ingredientLocation.location.id for ingredientLocation in ingredientLocations]
 
         newIngredientLocations = []
@@ -225,7 +220,7 @@ class IngredientEp(APIView):
             if not (ingredientLocation.location.id in newLocationIds):
                 ingredientLocation.delete()
             else:
-                newIngredientLocations.add(ingredientLocation)
+                newIngredientLocations.append(ingredientLocation)
         # add new locations
         for location in locations:
             if not (location.id in oldLocationIds):
