@@ -440,6 +440,19 @@ class ShopEp(APIView):
         serializer = ShopSerializer(shop)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+    def delete(self, request, shopId, format=None):
+        
+        try:
+            val = int(shopId)
+        except ValueError:
+            return Response('Unkonwn shop', status=status.HTTP_400_BAD_REQUEST)    
+        
+        shop = get_object_or_404(Shop, pk=shopId)
+        self.check_object_permissions(self.request, shop)
+        shop.delete()
+
+        return Response(status.HTTP_204_NO_CONTENT)
+
 class CurrentShopEp(APIView):
 
     permission_classes = (IsAuthenticated,IsOwner)
@@ -447,7 +460,7 @@ class CurrentShopEp(APIView):
     def get(self, request, format=None):
     
         user = self.request.user
-        userProfile = get_object_or_404(UserProfile,user__username=user.username)            
+        userProfile = get_object_or_404(UserProfile,user__username=user.username)
         shop = userProfile.shop
             
         serializer = ShopSerializer(shop)
