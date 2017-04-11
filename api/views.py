@@ -471,8 +471,10 @@ class CurrentShopEp(APIView):
         user = self.request.user        
         newCurrentShop = request.data
         
-        shop = get_object_or_404(Shop,pk=newCurrentShop['id'])            
         userProfile = get_object_or_404(UserProfile,user__username=user.username)
+        shop = None
+        if (newCurrentShop['id'] is not None):
+            shop = get_object_or_404(Shop,pk=newCurrentShop['id'])            
         userProfile.shop = shop
         userProfile.save()
             
