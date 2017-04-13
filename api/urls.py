@@ -14,6 +14,7 @@ urlpatterns = [
     url(r'^shopping-list/(?P<shoppingListId>[_0-9]+)', views.ShoppingListEp.as_view()),
     url(r'^ingredients', views.IngredientListEp.as_view()),  
     url(r'^ingredient/(?P<ingredientId>[_0-9]+)', views.IngredientEp.as_view()),
+    url(r'^ingredientbyname/(?P<ingredientName>.+)', views.IngredientByNameEp.as_view()),
     url(r'^shops', views.ShopListEp.as_view()),
     url(r'^shop/current', views.CurrentShopEp.as_view()), 
     url(r'^shop/(?P<shopId>[_0-9]+)', views.ShopEp.as_view()), 

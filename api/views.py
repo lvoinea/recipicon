@@ -234,7 +234,27 @@ class IngredientEp(APIView):
         serializer = IngredientLocationSerializer(ingredient)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
         
+class IngredientByNameEp(APIView):
+    permission_classes = (IsAuthenticated,IsOwner)
+    
+    def get(self, request, ingredientName, format=None):
         
+        user = self.request.user
+        ingredient = get_object_or_404(Ingredient, name=ingredientName, user__username=user.username)
+        self.check_object_permissions(self.request, ingredient)
+        
+        serializer = IngredientLocationSerializer(ingredient)
+        return Response(serializer.data)
+
+    def put(self, request, ingredientName, format=None):
+        
+        user = self.request.user
+        ingredient = Ingredient(user=user, name=ingredientName)
+        ingredient.save()
+
+        serializer = IngredientLocationSerializer(ingredient)
+        return Response(serializer.data)
+
 class ShoppingListEp(APIView):
     permission_classes = (IsAuthenticated,IsOwner)
     
@@ -293,8 +313,8 @@ class ShoppingListEp(APIView):
                 shoppingItem.quantity = newItem['quantity']                
                 # ingredient items are created if they do not exist already
                 if (newItem['ingredient'] is not None):
-                    shoppingItem.recipe = None;
-                    shoppingItem.ingredient = Utils.getSetIngredient(newItem['ingredient'], user)
+                    shoppingItem.recipe = None
+                    shoppingItem.ingredient = Ingredient.objects.get(pk=newItem['ingredient'], user=user)
                 # recipe items have to exist already or an error will be raised
                 # 10.10.2016: this assumes shoppping lists can be edited by adding recipes - currently not used
                 elif (newItem['recipe'] is not None):
@@ -317,8 +337,8 @@ class ShoppingListEp(APIView):
                 shoppingItem = ShoppingItem(unit = newItem['unit'], quantity = newItem['quantity'], shoppingList = shoppingList)
                 # ingredient items are created if they do not exist already
                 if (newItem['ingredient'] is not None):
-                    shoppingItem.recipe = None;
-                    shoppingItem.ingredient = Utils.getSetIngredient(newItem['ingredient'], user)
+                    shoppingItem.recipe = None
+                    shoppingItem.ingredient = Ingredient.objects.get(pk=newItem['ingredient'], user=user)
                 # recipe items have to exist already or an error will be raised
                 elif (newItem['recipe'] is not None):
                     shoppingItem.ingredient = None
@@ -568,14 +588,3 @@ class Utils():
     def isValidShoppingItemCmd(shoppingItem):
         return set(shoppingItem.keys()).issubset(set(['action']))
      
-        
-    @staticmethod
-    def getSetIngredient(name, user):
-        try:
-             ingredient = Ingredient.objects.get(name=name, user=user)
-             #print 'old ingredient :'+ingredient.name
-        except Ingredient.DoesNotExist:
-             ingredient = Ingredient(name=name, user=user)                 
-             #print 'new ingredient :'+ingredient.name
-             ingredient.save()
-        return ingredient
