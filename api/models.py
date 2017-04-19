@@ -17,7 +17,7 @@ class Recipe(models.Model):
     serves = models.IntegerField(default=2)
     description = models.CharField(max_length=2048)
     #-- FK
-    user = models.ForeignKey('auth.User', related_name='recipes')
+    user = models.ForeignKey('auth.User', related_name='recipes', on_delete = models.CASCADE)
     
     def __str__(self):
         return self.name
@@ -29,7 +29,7 @@ class Recipe(models.Model):
 class Ingredient(models.Model):
     name = models.CharField(max_length=32)
     #-- FK
-    user = models.ForeignKey('auth.User', related_name='ingredients')
+    user = models.ForeignKey('auth.User', related_name='ingredients', on_delete = models.CASCADE)
     
     def __str__(self):
         return self.name
@@ -39,14 +39,14 @@ class RecipeIngredient(models.Model):
     quantity = models.FloatField(default=0)
     #-- FK
     recipe =  models.ForeignKey('Recipe', related_name='recipe_ingredients', on_delete = models.CASCADE)
-    ingredient = models.ForeignKey('Ingredient', on_delete = models.CASCADE)
+    ingredient = models.ForeignKey('Ingredient', related_name='recipe_ingredients', on_delete = models.CASCADE)
 
 @python_2_unicode_compatible         
 class ShoppingList(models.Model):
     name = models.CharField(max_length = 64)
     date = models.DateField(auto_now_add = True)
     #-- FK
-    user = models.ForeignKey('auth.User', related_name='lists')
+    user = models.ForeignKey('auth.User', related_name='lists', on_delete = models.CASCADE)
     
     def __str__(self):
         return self.name
@@ -63,16 +63,25 @@ class ShoppingItem(models.Model):
 class Shop(models.Model):
     name = models.CharField(max_length=32)
     #-- FK
-    user = models.ForeignKey('auth.User', related_name='shops')
+    user = models.ForeignKey('auth.User', related_name='shops', on_delete = models.CASCADE)
     
     def __str__(self):
         return self.name
         
-class IngredientShop(models.Model):
-    location = models.CharField(max_length=32)
+@python_2_unicode_compatible         
+class Location(models.Model):
+    name = models.CharField(max_length=32)
     #-- FK
-    ingredient = models.ForeignKey('Ingredient', on_delete = models.CASCADE)
-    shop = models.ForeignKey('Shop', related_name='shop_ingredients', on_delete = models.CASCADE)
+    user = models.ForeignKey('auth.User', related_name='locations', on_delete = models.CASCADE)
+    shop = models.ForeignKey('Shop', related_name='locations', on_delete = models.CASCADE)
+    
+    def __str__(self):
+        return self.name  
+        
+class IngredientLocation(models.Model):
+    #-- FK
+    ingredient = models.ForeignKey('Ingredient', related_name='locations', on_delete = models.CASCADE)
+    location = models.ForeignKey('Location', related_name='ingredients', on_delete = models.CASCADE)
 
 
 

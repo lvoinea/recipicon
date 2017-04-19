@@ -1,21 +1,19 @@
-from .models import Recipe, Ingredient, RecipeIngredient, Shop, ShoppingList, ShoppingItem, UserProfile
+from .models import Recipe, Ingredient, RecipeIngredient, Shop, Location, IngredientLocation, ShoppingList, ShoppingItem, UserProfile
 from rest_framework import serializers
 
 class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
-        fields = ('name',)
+        fields = ('id','name')        
 
 class RecipeSerializer(serializers.ModelSerializer):
     
-    user = serializers.ReadOnlyField(source='user.username')
-
     class Meta:
         model = Recipe
-        fields = ('id','name', 'category', 'duration', 'serves', 'description','user','in_shopping_list')
+        fields = ('id','name', 'category', 'duration', 'in_shopping_list')
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
-    ingredient = serializers.ReadOnlyField(source='ingredient.name')
+    ingredient = serializers.ReadOnlyField(source='ingredient.id')
     
     class Meta:
         model = RecipeIngredient
@@ -31,7 +29,7 @@ class FullRecipeSerializer(serializers.ModelSerializer):
         
 class ShoppingItemSerializer(serializers.ModelSerializer):
 
-    ingredient = serializers.ReadOnlyField(source='ingredient.name')
+    ingredient = serializers.ReadOnlyField(source='ingredient.id')
     recipe = FullRecipeSerializer(read_only=True)
 
     class Meta:
@@ -48,8 +46,30 @@ class ShoppingListSerializer(serializers.ModelSerializer):
  
 class ShopSerializer(serializers.ModelSerializer):
     class Meta:
+        model = Shop
+        fields = ('id','name')
+        
+class LocationSerializer(serializers.ModelSerializer):
+
+    shop = serializers.ReadOnlyField(source='shop.id')
+    #shop = ShopSerializer(read_only=True)
+
+    class Meta:
+        model = Location
+        fields = ('id','name','shop')
+
+class LocationField(serializers.RelatedField):
+    def to_representation(self, value):        
+        return value.location.id
+        
+class IngredientLocationSerializer(serializers.ModelSerializer):
+
+    locations = LocationField(many=True, read_only=True)
+    #locations = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+
+    class Meta:
         model = Ingredient
-        fields = ('name')
+        fields = ('id','name','locations')
  
 class UserProfileSerializer(serializers.ModelSerializer):
 
