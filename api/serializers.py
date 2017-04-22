@@ -25,7 +25,7 @@ class FullRecipeSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Recipe
-        fields = ('id','name', 'category', 'duration', 'serves', 'description','recipe_ingredients','in_shopping_list')
+        fields = ('id','name', 'category', 'duration', 'serves', 'description','recipe_ingredients','in_shopping_list','image')
         
 class ShoppingItemSerializer(serializers.ModelSerializer):
 
