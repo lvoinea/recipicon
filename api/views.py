@@ -125,6 +125,7 @@ class RecipeEp(APIView):
         oldRecipe.description = newRecipe['description']
         oldRecipe.serves = newRecipe['serves']
         oldRecipe.duration = newRecipe['duration']
+        oldRecipe.image = newRecipe['image']
             
         #------------------------------- Update ingredients 
         #- Remove deleted recipe ingredient relations
@@ -574,7 +575,7 @@ class Utils():
     
     @staticmethod
     def isValidRecipe(recipe):
-        return set(recipe.keys()).issubset(set(['id', 'name', 'category', 'description', 'serves', 'duration', 'recipe_ingredients','in_shopping_list']))
+        return set(recipe.keys()).issubset(set(['id', 'name', 'category', 'description', 'serves', 'duration', 'recipe_ingredients','in_shopping_list','image']))
      
     @staticmethod
     def isValidShoppingList(shoppingList):

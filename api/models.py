@@ -16,6 +16,7 @@ class Recipe(models.Model):
     duration = models.IntegerField(default=30)
     serves = models.IntegerField(default=2)
     description = models.CharField(max_length=2048)
+    image = models.TextField(null = True)
     #-- FK
     user = models.ForeignKey('auth.User', related_name='recipes', on_delete = models.CASCADE)
     
