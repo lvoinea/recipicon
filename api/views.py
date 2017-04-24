@@ -18,6 +18,8 @@ from rest_framework.views import APIView
 from rest_framework.decorators import api_view, authentication_classes
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.renderers import JSONRenderer
+from django.http import JsonResponse
  
 #{"username":"jhon","password":"papa"} 
 
@@ -561,6 +563,35 @@ class LocationEp(APIView):
         self.check_object_permissions(self.request, location)
         location.delete()
         return Response(status.HTTP_204_NO_CONTENT)  
+
+class StatsEp(APIView):
+    permission_classes = (IsAuthenticated,IsOwner)
+    
+    def get(self, request, format=None):
+        user = self.request.user
+
+        recipes = Recipe.objects.filter(user__username=user.username)
+
+        stats = {}
+
+        #--- Recipes
+        statsRecipes = []
+        _stats = {}
+        for recipe in recipes:
+            category = recipe.category            
+            if (category == ''):
+                category = "other"
+            if category in _stats:
+                _stats[category] += 1
+            else:
+                _stats[category] = 1
+        for k in _stats:
+            statsRecipes.append({'category':k, 'recipes':_stats[k]})
+        stats['recipes'] = statsRecipes
+        stats['recipe_number'] = len(recipes)
+
+        #---
+        return JsonResponse(stats)
         
 class Utils():
 
