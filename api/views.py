@@ -569,14 +569,14 @@ class StatsEp(APIView):
     
     def get(self, request, format=None):
         user = self.request.user
-
-        recipes = Recipe.objects.filter(user__username=user.username)
-
+        
         stats = {}
 
         #--- Recipes
         statsRecipes = []
         _stats = {}
+
+        recipes = Recipe.objects.filter(user__username=user.username)
         for recipe in recipes:
             category = recipe.category            
             if (category == ''):
@@ -586,11 +586,22 @@ class StatsEp(APIView):
             else:
                 _stats[category] = 1
         for k in _stats:
-            statsRecipes.append({'category':k, 'recipes':_stats[k]})
+            statsRecipes.append({'category':k, 'recipes':_stats[k]})        
+
+        #--- Ingredients
+        statsIngredients = []
+        _stats = {}
+
+        ingredients = Ingredient.objects.filter(user__username=user.username)
+        for ingredient in ingredients:
+           _stats[ingredient.name] = len(ingredient.recipe_ingredients.all())
+        for k in _stats:
+            statsIngredients.append({'ingredient':k, 'recipes':_stats[k]})
+        #---
         stats['recipes'] = statsRecipes
         stats['recipe_number'] = len(recipes)
-
-        #---
+        stats['ingredients'] = statsIngredients
+        stats['ingredient_number'] = len(ingredients)
         return JsonResponse(stats)
         
 class Utils():
