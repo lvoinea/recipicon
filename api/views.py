@@ -1,5 +1,5 @@
 from .models import Recipe, RecipeIngredient, Ingredient, ShoppingList, ShoppingItem, UserProfile, IngredientLocation, Shop, Location
-from .serializers import RecipeSerializer, FullRecipeSerializer, IngredientSerializer, ShoppingListSerializer, IngredientLocationSerializer, ShopSerializer, LocationSerializer
+from .serializers import ShortRecipeSerializer, RecipeSerializer, FullRecipeSerializer, IngredientSerializer, ShoppingListSerializer, IngredientLocationSerializer, ShopSerializer, LocationSerializer
 from .permissions import IsOwner
 from .authentications import CsrfExemptTokenAuthentication
 
@@ -75,7 +75,7 @@ class RecipeListEp(APIView):
             else:
                 recipe.in_shopping_list = False
         
-        serializer = RecipeSerializer(recipes, many=True)
+        serializer = ShortRecipeSerializer(recipes, many=True)
         return Response(serializer.data)   
         
 class RecipeEp(APIView):
