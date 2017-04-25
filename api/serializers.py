@@ -6,7 +6,7 @@ class IngredientSerializer(serializers.ModelSerializer):
         model = Ingredient
         fields = ('id','name')        
 
-class RecipeSerializer(serializers.ModelSerializer):
+class ShortRecipeSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Recipe
@@ -27,10 +27,29 @@ class FullRecipeSerializer(serializers.ModelSerializer):
         model = Recipe
         fields = ('id','name', 'category', 'duration', 'serves', 'description','recipe_ingredients','in_shopping_list','image')
         
+
+class RecipeSerializer(serializers.ModelSerializer):
+    
+    recipe_ingredients = RecipeIngredientSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = Recipe
+        fields = ('id','name', 'category', 'duration', 'serves', 'description','recipe_ingredients','in_shopping_list')
+        
+
+class FullRecipeSerializer(serializers.ModelSerializer):
+    
+    recipe_ingredients = RecipeIngredientSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = Recipe
+        fields = ('id','name', 'category', 'duration', 'serves', 'description','recipe_ingredients','in_shopping_list','image')
+        
+
 class ShoppingItemSerializer(serializers.ModelSerializer):
 
     ingredient = serializers.ReadOnlyField(source='ingredient.id')
-    recipe = FullRecipeSerializer(read_only=True)
+    recipe = RecipeSerializer(read_only=True)
 
     class Meta:
         model = ShoppingItem
