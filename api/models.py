@@ -4,6 +4,7 @@ from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 
 class UserProfile(models.Model):
+    created = models. DateTimeField(auto_now_add=True)
     #-- FK
     user = models.OneToOneField('auth.User', related_name='profile', on_delete = models.CASCADE)
     shop = models.ForeignKey('Shop', related_name='+', on_delete = models.SET_NULL, null = True)    
@@ -17,6 +18,7 @@ class Recipe(models.Model):
     serves = models.IntegerField(default=2)
     description = models.CharField(max_length=2048)
     image = models.TextField(null = True)
+    created = models. DateTimeField(auto_now_add=True)
     #-- FK
     user = models.ForeignKey('auth.User', related_name='recipes', on_delete = models.CASCADE)
     
@@ -29,6 +31,7 @@ class Recipe(models.Model):
 @python_2_unicode_compatible         
 class Ingredient(models.Model):
     name = models.CharField(max_length=32)
+    created = models. DateTimeField(auto_now_add=True)
     #-- FK
     user = models.ForeignKey('auth.User', related_name='ingredients', on_delete = models.CASCADE)
     
@@ -46,6 +49,7 @@ class RecipeIngredient(models.Model):
 class ShoppingList(models.Model):
     name = models.CharField(max_length = 64)
     date = models.DateField(auto_now_add = True)
+    created = models. DateTimeField(auto_now_add=True)
     #-- FK
     user = models.ForeignKey('auth.User', related_name='lists', on_delete = models.CASCADE)
     
@@ -63,6 +67,7 @@ class ShoppingItem(models.Model):
 @python_2_unicode_compatible         
 class Shop(models.Model):
     name = models.CharField(max_length=32)
+    created = models. DateTimeField(auto_now_add=True)
     #-- FK
     user = models.ForeignKey('auth.User', related_name='shops', on_delete = models.CASCADE)
     
@@ -72,6 +77,7 @@ class Shop(models.Model):
 @python_2_unicode_compatible         
 class Location(models.Model):
     name = models.CharField(max_length=32)
+    created = models. DateTimeField(auto_now_add=True)
     #-- FK
     user = models.ForeignKey('auth.User', related_name='locations', on_delete = models.CASCADE)
     shop = models.ForeignKey('Shop', related_name='locations', on_delete = models.CASCADE)
