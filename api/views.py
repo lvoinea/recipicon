@@ -1,7 +1,8 @@
 from .models import Recipe, RecipeIngredient, Ingredient, ShoppingList, ShoppingItem, UserProfile, IngredientLocation, Shop, Location
 from .serializers import ShortRecipeSerializer, RecipeSerializer, FullRecipeSerializer, IngredientSerializer, ShoppingListSerializer, IngredientLocationSerializer, ShopSerializer, LocationSerializer
 from .permissions import IsOwner
-from .authentications import CsrfExemptTokenAuthentication
+from .authentications import CsrfExemptTokenAuthentication, CsrfExemptSessionAuthentication
+from .utils import Utils
 
 from django.views.decorators.csrf import csrf_exempt
 
@@ -18,18 +19,16 @@ from rest_framework.views import APIView
 from rest_framework.decorators import api_view, authentication_classes
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.authentication import BasicAuthentication
 from rest_framework.renderers import JSONRenderer
 from django.http import JsonResponse
  
 #{"username":"jhon","password":"papa"} 
 
 @api_view(['POST'])
-@authentication_classes((CsrfExemptTokenAuthentication,))
 @csrf_exempt
+@authentication_classes((CsrfExemptTokenAuthentication, CsrfExemptSessionAuthentication, BasicAuthentication))
 def LoginEp(request):
-    """
-    Authenticates a user
-    """
     username = request.data['username']
     password = request.data['password']
     user = authenticate(username=username, password=password)
@@ -42,33 +41,70 @@ def LoginEp(request):
             return Response('Account has been disabled', status=status.HTTP_403_FORBIDDEN)            
     else:
         return Response('Invalid login combination', status=status.HTTP_401_UNAUTHORIZED)
-        
+
+@api_view(['POST'])
+@csrf_exempt
+@authentication_classes((CsrfExemptTokenAuthentication, CsrfExemptSessionAuthentication, BasicAuthentication))
+def SignUpEp(request):
+    username = request.data['username']
+    email = request.data['email']
+    password = request.data['password']
+    confirmPassword = request.data['confirmPassword']
+
+    if (password != confirmPassword):
+        return Response('the two password are not identical', status=status.HTTP_400_BAD_REQUEST)
+    if UserProfile.objects.filter(user__username=username).exists():
+        return Response('the provided email is already in use', status=status.HTTP_400_BAD_REQUEST)
+
+    Utils.createUser(username, email, password)
+    user = authenticate(username=username, password=password)
+    if user is not None:
+        if user.is_active:
+            login(request, user)
+            token = Token.objects.get_or_create(user=user)
+            return Response(token[0].key, status=status.HTTP_200_OK)
+        else:
+            return Response('Account has been disabled', status=status.HTTP_403_FORBIDDEN)
+    else:
+        return Response('Invalid login combination', status=status.HTTP_401_UNAUTHORIZED)
+
 @api_view(['GET'])
 def LogoutEp(request):
-    """
-    Logout a user
-    """
     if request.user.is_authenticated():
         token = Token.objects.get_or_create(user=request.user)
         token[0].delete()
     logout(request)
     return Response('User logged out', status=status.HTTP_200_OK)
- 
+
+@api_view(['GET'])
+def CloseUpEp(request):
+    user = request.user
+    if request.user.is_authenticated():
+        token = Token.objects.get_or_create(user=request.user)
+        token[0].delete()
+    logout(request)
+    user.delete()
+
+    return Response('User account closed', status=status.HTTP_200_OK)
+
 class RecipeListEp(APIView):
     permission_classes = (IsAuthenticated,IsOwner)
     
     def get(self, request, format=None):    
-        #return recipes
         user = self.request.user
-        recipes = Recipe.objects.filter(user__username=user.username)
+        recipes = user.recipes.all()
         recipeIds = [recipe.id for recipe in recipes]
         
-        # get shopping list
-        userProfile = get_object_or_404(UserProfile,user__username=user.username)            
+        # Recipes have to be marked to indicate whether they are included in the current shopping ist or not
+        # To this end, the shooping liist is retrieved first from the user profile
+        # Then the set of recipe ids in the current shopping list is computed.
+        # Based n this set the previously retrieved recipes are marked appropriately.
+
+        userProfile = get_object_or_404(UserProfile,user__username=user.username)
         shoppingList = userProfile.shoppingList
         items = shoppingList.items.filter(recipe_id__in = recipeIds)
-        
         selectedRecipeIds = set([item.recipe.id for item in items])
+
         for recipe in recipes:
             if recipe.id in selectedRecipeIds:
                 recipe.in_shopping_list = True
@@ -88,6 +124,7 @@ class RecipeEp(APIView):
         self.check_object_permissions(self.request, recipe)
         
         # Check if the recipe is in the current shopping list
+        # The current shopping list has to be retrieved first from the user profile.
         recipe.in_shopping_list = False        
         user = self.request.user
         userProfile = get_object_or_404(UserProfile,user__username=user.username)            
@@ -102,21 +139,25 @@ class RecipeEp(APIView):
     def delete(self, request, recipeId, format=None):
         recipe = get_object_or_404(Recipe, pk=recipeId)
         self.check_object_permissions(self.request, recipe)
+
         recipe.delete()
+
         return Response(status.HTTP_204_NO_CONTENT)       
     
     def post(self, request, recipeId, format=None):
     
         user = self.request.user
         
-        newRecipe = request.data;        
-        if not Utils.isValidRecipe(newRecipe):
-            return Response('Unkonwn recipe data', status=status.HTTP_400_BAD_REQUEST)        
+        # Check first if the recipe has a valid object format
+        newRecipe = request.data;
+        if not ViewUtils.isValidRecipe(newRecipe):
+            return Response('Unknown recipe data', status=status.HTTP_400_BAD_REQUEST)
         
         #------------------------------- Update recipe            
         # recipe exists
         if (newRecipe['id'] != '_'):                       
             oldRecipe = get_object_or_404(Recipe, pk=newRecipe['id'])
+            self.check_object_permissions(self.request, oldRecipe)
         # recipe is new
         else :
             oldRecipe = Recipe(user=user)
@@ -133,8 +174,8 @@ class RecipeEp(APIView):
         #- Remove deleted recipe ingredient relations
         newRecipeIngredientIds = set([])
         for newRecipeIngredient in newRecipe['recipe_ingredients']:          
-            if not Utils.isValidRecipeIngredient(newRecipeIngredient):
-                return Response('Unkonwn recipe ingredient data: '+ str(newRecipeIngredient), status=status.HTTP_400_BAD_REQUEST)
+            if not ViewUtils.isValidRecipeIngredient(newRecipeIngredient):
+                return Response('Unknown recipe ingredient data: '+ str(newRecipeIngredient), status=status.HTTP_400_BAD_REQUEST)
             else:
                 newRecipeIngredient['id'] = str(newRecipeIngredient['id'])
                 newRecipeIngredientIds.add(newRecipeIngredient['id'])
@@ -145,7 +186,6 @@ class RecipeEp(APIView):
             oldRecipeIngredientId = str(oldRecipeIngredient.id)
             if not oldRecipeIngredientId in newRecipeIngredientIds:
                 oldRecipeIngredient.delete()
-                #print 'delete recipe ingredient :'+ oldRecipeIngredientId
             else:
                 dOldRecipeIngredients[oldRecipeIngredientId] = oldRecipeIngredient
         
@@ -166,12 +206,14 @@ class RecipeEp(APIView):
         oldRecipe.save()
         
         # Check if the recipe is in the current shopping list
+        # To this end, retrieve first the shopping list from the user profile
         oldRecipe.in_shopping_list = False        
         userProfile = get_object_or_404(UserProfile,user__username=user.username)            
         shoppingList = userProfile.shoppingList
         items = shoppingList.items.filter(recipe_id = oldRecipe.id)
         if (len(items) == 1):
             oldRecipe.in_shopping_list = True
+
         serializer = FullRecipeSerializer(oldRecipe)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
         
@@ -181,6 +223,7 @@ class IngredientListEp(APIView):
     def get(self, request, format=None):    
         user = self.request.user
         ingredients = user.ingredients
+
         serializer = IngredientLocationSerializer(ingredients, many=True)
         return Response(serializer.data)
         
@@ -189,7 +232,6 @@ class IngredientEp(APIView):
     
     def get(self, request, ingredientId, format=None):    
         
-        user = self.request.user
         ingredient = get_object_or_404(Ingredient, pk=ingredientId)
         self.check_object_permissions(self.request, ingredient)
         
@@ -198,17 +240,19 @@ class IngredientEp(APIView):
         
     def post(self, request, ingredientId, format=None):    
         
-        user = self.request.user        
+        user = self.request.user
+
+        # Check first if the ingredient has a valid object format
         newIngredient = request.data
-       
-        if not Utils.isValidIngredient(newIngredient):
-            return Response('Unkonwn ingredient data', status=status.HTTP_400_BAD_REQUEST)   
+        if not ViewUtils.isValidIngredient(newIngredient):
+            return Response('Unknown ingredient data', status=status.HTTP_400_BAD_REQUEST)
         
         if (str(newIngredient['id']).startswith('_')):
             ingredient = Ingredient(user=user)
             ingredient.save()
         else:
             ingredient = Ingredient.objects.get(id=newIngredient['id'])
+            self.check_object_permissions(self.request, ingredient)
             
         ingredient.name = newIngredient['name']
 
@@ -261,7 +305,7 @@ class IngredientByNameEp(APIView):
 class ShoppingListEp(APIView):
     permission_classes = (IsAuthenticated,IsOwner)
     
-    # Use id = '_' to get thhe current shopping list from the user profile
+    # Use id = '_' to get the current shopping list from the user profile
     def get(self, request, shoppingListId, format=None):
         if (shoppingListId == '_'):
             user = self.request.user
@@ -269,8 +313,8 @@ class ShoppingListEp(APIView):
             shoppingList = userProfile.shoppingList
         else:
             shoppingList = get_object_or_404(ShoppingList, pk=shoppingListId)
-            
-        self.check_object_permissions(self.request, shoppingList)
+            self.check_object_permissions(self.request, shoppingList)
+
         serializer = ShoppingListSerializer(shoppingList)
         return Response(serializer.data)
     
@@ -278,19 +322,22 @@ class ShoppingListEp(APIView):
     def post(self, request, shoppingListId, format=None):    
         user = self.request.user
         
-        newShoppingList = request.data;        
-        if not Utils.isValidShoppingList(newShoppingList):
+        # Check first if the shopping list has a valid object format
+        newShoppingList = request.data;
+        if not ViewUtils.isValidShoppingList(newShoppingList):
             return Response('Unkonwn shopping list data', status=status.HTTP_400_BAD_REQUEST)   
         
         #---------------------------- Update existing shopping list ---
         if (shoppingListId != '_'):                       
             shoppingList = get_object_or_404(ShoppingList, pk=shoppingListId)
+            self.check_object_permissions(self.request, shoppingList)
+
             shoppingList.name = newShoppingList['name']
             
             #- Remove deleted items
             newShoppingItems = set([])
             for newItem in newShoppingList['items']:
-                if not Utils.isValidShoppingItem(newItem):
+                if not ViewUtils.isValidShoppingItem(newItem):
                     return Response('Unkonwn shopping list item data: '+ str(newItem), status=status.HTTP_400_BAD_REQUEST)
                 else:
                     newItem['id'] = str(newItem['id'])
@@ -301,7 +348,6 @@ class ShoppingListEp(APIView):
                 oldShoppingItemId = str(oldShoppingItem.id)
                 if not oldShoppingItemId in newShoppingItems:
                     oldShoppingItem.delete()
-                    #print 'delete shopping item :'+ oldShoppingItemId
                 else:
                     dOldShoppingItems[oldShoppingItemId] = oldShoppingItem
         
@@ -369,7 +415,7 @@ class ShoppingRecipeItemEp(APIView):
             shoppingList = userProfile.shoppingList
         else:
             shoppingList = get_object_or_404(ShoppingList, pk=shoppingListId)
-        self.check_object_permissions(self.request, shoppingList)
+            self.check_object_permissions(self.request, shoppingList)
             
         # find item
         items = shoppingList.items.filter(recipe_id = recipeId)
@@ -381,8 +427,9 @@ class ShoppingRecipeItemEp(APIView):
     def post(self, request, shoppingListId, recipeId, format=None):
         command = request.data        
         
-        if not Utils.isValidShoppingItemCmd(command):
-            return Response('Unkonwn command format.', status=status.HTTP_400_BAD_REQUEST)
+        # Check first if the shopping item has a valid object format
+        if not ViewUtils.isValidShoppingItemCmd(command):
+            return Response('Unknown command format.', status=status.HTTP_400_BAD_REQUEST)
         
         # get shopping list
         user = self.request.user
@@ -391,7 +438,7 @@ class ShoppingRecipeItemEp(APIView):
             shoppingList = userProfile.shoppingList
         else:
             shoppingList = get_object_or_404(ShoppingList, pk=shoppingListId)
-        self.check_object_permissions(self.request, shoppingList)
+            self.check_object_permissions(self.request, shoppingList)
         
         # find shopping item
         shoppingItem = None
@@ -428,6 +475,7 @@ class ShopListEp(APIView):
     def get(self, request, format=None):
         user = self.request.user
         shops = user.shops
+
         serializer = ShopSerializer(shops, many=True)
         return Response(serializer.data)
 
@@ -442,6 +490,7 @@ class ShopEp(APIView):
             shop = userProfile.shop
         else:
             shop = get_object_or_404(Shop, pk=shopId)
+            self.check_object_permissions(self.request, shop)
             
         serializer = ShopSerializer(shop)
         return Response(serializer.data)
@@ -456,6 +505,7 @@ class ShopEp(APIView):
             shop.save()            
         else:
             shop = get_object_or_404(Shop, pk=newShop['id'])
+            self.check_object_permissions(self.request, shop)
             
         shop.name = newShop['name']
         shop.save()
@@ -472,6 +522,7 @@ class ShopEp(APIView):
         
         shop = get_object_or_404(Shop, pk=shopId)
         self.check_object_permissions(self.request, shop)
+
         shop.delete()
 
         return Response(status.HTTP_204_NO_CONTENT)
@@ -497,7 +548,9 @@ class CurrentShopEp(APIView):
         userProfile = get_object_or_404(UserProfile,user__username=user.username)
         shop = None
         if (newCurrentShop['id'] is not None):
-            shop = get_object_or_404(Shop,pk=newCurrentShop['id'])            
+            shop = get_object_or_404(Shop, pk=newCurrentShop['id'])
+            self.check_object_permissions(self.request, shop)
+
         userProfile.shop = shop
         userProfile.save()
             
@@ -511,6 +564,7 @@ class LocationListEp(APIView):
     def get(self, request, format=None):
         user = self.request.user
         locations = user.locations
+
         serializer = LocationSerializer(locations, many=True)
         return Response(serializer.data)
         
@@ -522,7 +576,7 @@ class LocationEp(APIView):
         try:
             val = int(locationId)
         except ValueError:
-            return Response('Unkonwn location', status=status.HTTP_400_BAD_REQUEST)
+            return Response('Unknown location', status=status.HTTP_400_BAD_REQUEST)
         
         location = get_object_or_404(Location, pk=locationId)
         self.check_object_permissions(request, location)
@@ -539,7 +593,7 @@ class LocationEp(APIView):
         self.check_object_permissions(request, shop)
         
         if (locationId.startswith('_')):
-            location = Location(user=user,shop=shop)
+            location = Location(user=user, shop=shop)
             location.save()            
         else:
             location = get_object_or_404(Location, pk=locationId)
@@ -557,10 +611,11 @@ class LocationEp(APIView):
         try:
             val = int(locationId)
         except ValueError:
-            return Response('Unkonwn location', status=status.HTTP_400_BAD_REQUEST)    
+            return Response('Unknown location', status=status.HTTP_400_BAD_REQUEST)
     
         location = get_object_or_404(Location, pk=locationId)
         self.check_object_permissions(self.request, location)
+
         location.delete()
         return Response(status.HTTP_204_NO_CONTENT)  
 
@@ -604,7 +659,7 @@ class StatsEp(APIView):
         stats['ingredient_number'] = len(ingredients)
         return JsonResponse(stats)
         
-class Utils():
+class ViewUtils():
 
     @staticmethod
     def isValidRecipeIngredient(ingredient):
