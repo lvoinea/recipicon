@@ -87,6 +87,13 @@ def CloseUpEp(request):
 
     return Response('User account closed', status=status.HTTP_200_OK)
 
+@api_view(['GET'])
+def ResetEp(request,email,token):
+    print email, token
+    #TODO: this will send the email
+    #TODO: POST will reset the password if the token mathes the user
+    return Response('OK', status=status.HTTP_200_OK)
+
 class RecipeListEp(APIView):
     permission_classes = (IsAuthenticated,IsOwner)
     
