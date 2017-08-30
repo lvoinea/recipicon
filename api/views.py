@@ -7,6 +7,7 @@ from .utils import Utils
 from django.views.decorators.csrf import csrf_exempt
 
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
 
 from django.shortcuts import get_object_or_404
 
@@ -87,12 +88,39 @@ def CloseUpEp(request):
 
     return Response('User account closed', status=status.HTTP_200_OK)
 
-@api_view(['GET'])
-def ResetEp(request,email,token):
-    print email, token
-    #TODO: this will send the email
-    #TODO: POST will reset the password if the token mathes the user
+@api_view(['POST'])
+@authentication_classes([])
+def ResetEp(request):
+
+    #TODO:
+    # check passwords are the same?
+    # check user exists
+    # check token is valid
+
+    username = request.data['username']
+    token = request.data['token']
+    password = request.data['password']
+    confirmPassword = request.data['confirmPassword']
+
+    user = User.objects.get(username=username)
+    user.set_password(password)
+    user.save()
+
     return Response('OK', status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+def ResetRequestEp(request):
+    email = request.data['email']
+
+    print email
+
+    # TODO: retrieve the user with the given email
+    # get associated token
+    # send email with link to reset page where user has to provide the email again
+    # the logs will only contain the token, not the email
+
+    return Response('OK', status=status.HTTP_200_OK)
+
 
 class RecipeListEp(APIView):
     permission_classes = (IsAuthenticated,IsOwner)
