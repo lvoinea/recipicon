@@ -51,7 +51,6 @@ def LoginEp(request):
 @csrf_exempt
 @authentication_classes((CsrfExemptTokenAuthentication, CsrfExemptSessionAuthentication, BasicAuthentication))
 def SignUpEp(request):
-    isValidSignupRequest
 
     sigunpRequest = request.data
 
@@ -152,6 +151,12 @@ def PassResetRequestEp(request):
     msg['Subject'] = 'The contents of %s' % textfile
     msg['From'] = emailFrom
     msg['To'] = emailTo
+
+    #server = smtplib.SMTP('smtp.gmail.com', 587)
+    #server.ehlo()
+    #server.starttls()
+    #server.ehlo()
+    #server.login("youremailusername", "password")
 
     s = smtplib.SMTP('localhost')
     s.sendmail(emailFrom, [emailTo], msg.as_string())
