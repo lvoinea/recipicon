@@ -3,10 +3,12 @@ from .serializers import ShortRecipeSerializer, RecipeSerializer, FullRecipeSeri
 from .permissions import IsOwner
 from .authentications import CsrfExemptTokenAuthentication, CsrfExemptSessionAuthentication
 from .utils import Utils
+from .site import Site
 
 from django.views.decorators.csrf import csrf_exempt
 
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
 
 from django.shortcuts import get_object_or_404
 
@@ -22,6 +24,9 @@ from rest_framework import status
 from rest_framework.authentication import BasicAuthentication
 from rest_framework.renderers import JSONRenderer
 from django.http import JsonResponse
+
+import smtplib
+from email.mime.text import MIMEText
  
 #{"username":"jhon","password":"papa"} 
 
@@ -46,15 +51,21 @@ def LoginEp(request):
 @csrf_exempt
 @authentication_classes((CsrfExemptTokenAuthentication, CsrfExemptSessionAuthentication, BasicAuthentication))
 def SignUpEp(request):
-    username = request.data['username']
-    email = request.data['email']
-    password = request.data['password']
-    confirmPassword = request.data['confirmPassword']
+
+    sigunpRequest = request.data
+
+    if not ViewUtils.isValidSignupRequest(sigunpRequest):
+        return Response('Invalid sign-up request', status=status.HTTP_400_BAD_REQUEST)
+
+    username = sigunpRequest['username']
+    email = sigunpRequest['email']
+    password = sigunpRequest['password']
+    confirmPassword = sigunpRequest['confirmPassword']
 
     if (password != confirmPassword):
-        return Response('the two password are not identical', status=status.HTTP_400_BAD_REQUEST)
+        return Response('The provided passwords are not identical', status=status.HTTP_400_BAD_REQUEST)
     if UserProfile.objects.filter(user__username=username).exists():
-        return Response('the provided email is already in use', status=status.HTTP_400_BAD_REQUEST)
+        return Response('The provided email is already in use', status=status.HTTP_400_BAD_REQUEST)
 
     Utils.createUser(username, email, password)
     user = authenticate(username=username, password=password)
@@ -86,6 +97,74 @@ def CloseUpEp(request):
     user.delete()
 
     return Response('User account closed', status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+@authentication_classes([])
+def ResetEp(request):
+
+    resetRequest = request.data
+
+    if not ViewUtils.isValidResetRequest(resetRequest):
+        return Response('invalid reset request', status=status.HTTP_400_BAD_REQUEST)
+
+    username = resetRequest['username']
+    tokenId = resetRequest['token']
+    password = resetRequest['password']
+    confirmPassword = resetRequest['confirmPassword']
+
+    if (password != confirmPassword):
+        return Response('the provided passwords are not identical', status=status.HTTP_400_BAD_REQUEST)
+
+    if (not User.objects.filter(username=username).exists()):
+        return Response('the provided id is unknown', status=status.HTTP_400_BAD_REQUEST)
+
+    token = Token.objects.get_or_create(user__username=username)
+    if (token[0].key != tokenId):
+        return Response('the provided credentials are invalid', status=status.HTTP_401_UNAUTHORIZED)
+
+    user = User.objects.get(username=username)
+    user.set_password(password)
+    user.save()
+
+    return Response('OK', status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+@authentication_classes([])
+def PassResetRequestEp(request):
+
+    passResetRequest = request.data
+
+    if not ViewUtils.isValidPassResetRequest(passResetRequest):
+        return Response('invalid reset reset request', status=status.HTTP_400_BAD_REQUEST)
+
+    username = passResetRequest['username']
+    user = get_object_or_404(User, username=username)
+    token = Token.objects.get_or_create(user__username=username)
+
+    emailTo = user.email
+    emailFrom = Site.serverEmail
+    emailMessage = "http://" + Site.serverName + "/#/reset/t/"+token[0].key
+    print emailMessage
+
+    """
+    msg = MIMEText(emailMessage)
+    msg['Subject'] = 'The contents of %s' % textfile
+    msg['From'] = emailFrom
+    msg['To'] = emailTo
+
+    #server = smtplib.SMTP('smtp.gmail.com', 587)
+    #server.ehlo()
+    #server.starttls()
+    #server.ehlo()
+    #server.login("youremailusername", "password")
+
+    s = smtplib.SMTP('localhost')
+    s.sendmail(emailFrom, [emailTo], msg.as_string())
+    s.quit()
+    """
+
+    return Response('OK', status=status.HTTP_401_UNAUTHORIZED)
+
 
 class RecipeListEp(APIView):
     permission_classes = (IsAuthenticated,IsOwner)
@@ -660,6 +739,19 @@ class StatsEp(APIView):
         return JsonResponse(stats)
         
 class ViewUtils():
+
+
+    @staticmethod
+    def isValidSignupRequest(signupRequest):
+        return set(signupRequest.keys()).issubset(set(['username', 'email', 'password', 'confirmPassword']))
+
+    @staticmethod
+    def isValidPassResetRequest(passResetRequest):
+        return set(passResetRequest.keys()).issubset(set(['username']))
+
+    @staticmethod
+    def isValidResetRequest(resetRequest):
+        return set(resetRequest.keys()).issubset(set(['username', 'token', 'password', 'confirmPassword']))
 
     @staticmethod
     def isValidRecipeIngredient(ingredient):
