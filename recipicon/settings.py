@@ -97,9 +97,9 @@ DATABASES = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'listkeepr',
-        'USER': 'listkeepr',
-        'PASSWORD': 'test',
+        'NAME': 'recipicon',
+        'USER': 'recipicon',
+        'PASSWORD': 'recipicon',
         'HOST': 'localhost',
         'PORT': '',
     }
