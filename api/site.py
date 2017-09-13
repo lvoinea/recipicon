@@ -1,4 +1,8 @@
 class Site():
 
-    serverName = 'www.recipicon.com'
-    serverEmail = 'service@recipicon.com'
+    serverHttpUrl = ''
+    serverSmtp = ''
+    serverPort = 587
+    serverFromEmail = ''
+    serverFromName = 't'
+    serverPass = ''
