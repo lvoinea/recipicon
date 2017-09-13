@@ -10,7 +10,7 @@ urlpatterns = [
     url(r'^auth/signup', views.SignUpEp),
     url(r'^auth/logout', views.LogoutEp),
     url(r'^auth/closeup', views.CloseUpEp),
-    url(r'^auth/password-reset', views.ResetEp),
+    url(r'^auth/password-reset', views.PassResetEp),
     url(r'^auth/request-password-reset', views.PassResetRequestEp),
     url(r'^recipes', views.RecipeListEp.as_view()),
     url(r'^recipe/(?P<recipeId>[_0-9]+)', views.RecipeEp.as_view()),

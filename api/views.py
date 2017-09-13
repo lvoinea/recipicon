@@ -27,6 +27,8 @@ from django.http import JsonResponse
 
 import smtplib
 from email.mime.text import MIMEText
+from email.header import Header
+from email.utils import formataddr
  
 #{"username":"jhon","password":"papa"} 
 
@@ -100,7 +102,7 @@ def CloseUpEp(request):
 
 @api_view(['POST'])
 @authentication_classes([])
-def ResetEp(request):
+def PassResetEp(request):
 
     resetRequest = request.data
 
@@ -119,6 +121,7 @@ def ResetEp(request):
         return Response('the provided id is unknown', status=status.HTTP_400_BAD_REQUEST)
 
     token = Token.objects.get_or_create(user__username=username)
+
     if (token[0].key != tokenId):
         return Response('the provided credentials are invalid', status=status.HTTP_401_UNAUTHORIZED)
 
@@ -139,31 +142,32 @@ def PassResetRequestEp(request):
 
     username = passResetRequest['username']
     user = get_object_or_404(User, username=username)
-    token = Token.objects.get_or_create(user__username=username)
+    token = Token.objects.get_or_create(user=user)
 
-    emailTo = user.email
-    emailFrom = Site.serverEmail
-    emailMessage = "http://" + Site.serverName + "/#/reset/t/"+token[0].key
-    print emailMessage
+    #-- Send message
+    emailMessage = \
+"""
+Please follow the link below in order to reset your password:
 
-    """
+
+http://%s/#/reset/%s/%s
+"""
+    emailMessage = emailMessage %(Site.serverHttpUrl, username, token[0].key)
+    #print emailMessage
+
     msg = MIMEText(emailMessage)
-    msg['Subject'] = 'The contents of %s' % textfile
-    msg['From'] = emailFrom
-    msg['To'] = emailTo
+    msg['Subject'] = 'Password reset request'
+    #msg['From'] = Site.serverFromName
+    msg['From'] = formataddr((str(Header(Site.serverFromName, 'utf-8')), Site.serverFromEmail))
+    msg['To'] = user.email
 
-    #server = smtplib.SMTP('smtp.gmail.com', 587)
-    #server.ehlo()
-    #server.starttls()
-    #server.ehlo()
-    #server.login("youremailusername", "password")
+    emailServer = smtplib.SMTP(Site.serverSmtp, Site.serverPort)
+    emailServer.starttls()
+    emailServer.login(Site.serverFromEmail, Site.serverPass)
+    emailServer.sendmail(Site.serverFromEmail, [user.email], msg.as_string())
+    emailServer.quit()
 
-    s = smtplib.SMTP('localhost')
-    s.sendmail(emailFrom, [emailTo], msg.as_string())
-    s.quit()
-    """
-
-    return Response('OK', status=status.HTTP_401_UNAUTHORIZED)
+    return Response('OK', status=status.HTTP_200_OK)
 
 
 class RecipeListEp(APIView):
