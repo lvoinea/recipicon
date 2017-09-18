@@ -25,6 +25,7 @@ from rest_framework.authentication import BasicAuthentication
 from rest_framework.renderers import JSONRenderer
 from django.http import JsonResponse
 
+import socket
 import smtplib
 from email.mime.text import MIMEText
 from email.header import Header
@@ -160,7 +161,7 @@ http://%s/#/reset/%s/%s
     msg['From'] = formataddr((str(Header(Site.serverFromName, 'utf-8')), Site.serverFromEmail))
     msg['To'] = user.email
 
-    emailServer = smtplib.SMTP(Site.serverSmtp, Site.serverPort)
+    emailServer = smtplib.SMTP(socket.gethostbyname(Site.serverSmtp), Site.serverPort, socket.gethostbyname('recipicon.com'))
     emailServer.starttls()
     emailServer.login(Site.serverFromEmail, Site.serverPass)
     emailServer.sendmail(Site.serverFromEmail, [user.email], msg.as_string())
