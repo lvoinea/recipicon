@@ -152,12 +152,11 @@ Please follow the link below in order to reset your password:
 
 http://%s/#/reset/%s/%s
 """
-    emailMessage = emailMessage %(Site.serverHttpUrl, username, token[0].key)
+    emailMessage = emailMessage %(Site.serverHttpIp, username, token[0].key)
     #print emailMessage
 
     msg = MIMEText(emailMessage)
     msg['Subject'] = 'Password reset request'
-    #msg['From'] = Site.serverFromName
     msg['From'] = formataddr((str(Header(Site.serverFromName, 'utf-8')), Site.serverFromEmail))
     msg['To'] = user.email
 

@@ -1,8 +1,8 @@
 class Site():
 
-    serverHttpUrl = ''
+    serverHttpIp = ''
     serverSmtp = ''
     serverPort = 587
     serverFromEmail = ''
-    serverFromName = 't'
+    serverFromName = ''
     serverPass = ''
