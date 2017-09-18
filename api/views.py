@@ -152,7 +152,7 @@ Please follow the link below in order to reset your password:
 
 http://%s/#/reset/%s/%s
 """
-    emailMessage = emailMessage %(Site.serverHttpUrl, username, token[0].key)
+    emailMessage = emailMessage %(Site.serverHttpIp, username, token[0].key)
     #print emailMessage
 
     msg = MIMEText(emailMessage)
