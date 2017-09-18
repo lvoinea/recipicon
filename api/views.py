@@ -157,7 +157,6 @@ http://%s/#/reset/%s/%s
 
     msg = MIMEText(emailMessage)
     msg['Subject'] = 'Password reset request'
-    #msg['From'] = Site.serverFromName
     msg['From'] = formataddr((str(Header(Site.serverFromName, 'utf-8')), Site.serverFromEmail))
     msg['To'] = user.email
 
