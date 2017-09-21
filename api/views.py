@@ -724,7 +724,10 @@ class StatsEp(APIView):
             else:
                 _stats[category] = 1
         for k in _stats:
-            statsRecipes.append({'category':k, 'recipes':_stats[k]})        
+            statsRecipes.append({'category':k, 'recipes':_stats[k]})
+
+        #--- Shopping lists
+        shoppingLists = ShoppingList.objects.filter(user__username=user.username)
 
         #--- Ingredients
         statsIngredients = []
@@ -738,6 +741,7 @@ class StatsEp(APIView):
         #---
         stats['recipes'] = statsRecipes
         stats['recipe_number'] = len(recipes)
+        stats['shoppingList_number'] = len(shoppingLists)
         stats['ingredients'] = statsIngredients
         stats['ingredient_number'] = len(ingredients)
         return JsonResponse(stats)
