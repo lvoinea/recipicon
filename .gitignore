@@ -1,4 +1,7 @@
 *.pyc
 *.sqlite3
 .idea/
-api/site.py
+/venv/
+/local/
+/support/
+/tmp/

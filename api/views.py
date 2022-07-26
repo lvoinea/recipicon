@@ -3,7 +3,7 @@ from .serializers import ShortRecipeSerializer, RecipeSerializer, FullRecipeSeri
 from .permissions import IsOwner
 from .authentications import CsrfExemptTokenAuthentication, CsrfExemptSessionAuthentication
 from .utils import Utils
-from .site import Site
+from .config import SiteConfig
 
 from django.views.decorators.csrf import csrf_exempt
 
@@ -30,6 +30,8 @@ import smtplib
 from email.mime.text import MIMEText
 from email.header import Header
 from email.utils import formataddr
+
+site_config = SiteConfig()
  
 #{"username":"jhon","password":"papa"} 
 
@@ -151,20 +153,34 @@ def PassResetRequestEp(request):
 Please follow the link below in order to reset your password:
 
 
-http://%s/#/reset/%s/%s
+http://%s/app/#/reset/%s/%s
 """
-    emailMessage = emailMessage %(Site.serverHttpIp, username, token[0].key)
+    emailMessage = emailMessage %(site_config['HOST']['serverHttpIp'], username, token[0].key)
     #print emailMessage
 
     msg = MIMEText(emailMessage)
     msg['Subject'] = 'Password reset request'
-    msg['From'] = formataddr((str(Header(Site.serverFromName, 'utf-8')), Site.serverFromEmail))
+    msg['From'] = formataddr(
+        (str(Header(site_config['EMAIL']['serverFromName'], 'utf-8')),
+         site_config['EMAIL']['serverFromEmail'])
+    )
     msg['To'] = user.email
 
-    emailServer = smtplib.SMTP(socket.gethostbyname(Site.serverSmtp), Site.serverPort, socket.gethostbyname('recipicon.com'))
+    emailServer = smtplib.SMTP(
+        socket.gethostbyname(site_config['EMAIL']['serverSmtp']),
+        site_config['EMAIL']['serverPort'],
+        socket.gethostbyname('recipicon.com')
+    )
     emailServer.starttls()
-    emailServer.login(Site.serverFromEmail, Site.serverPass)
-    emailServer.sendmail(Site.serverFromEmail, [user.email], msg.as_string())
+    emailServer.login(
+        site_config['EMAIL']['serverFromEmail'],
+        site_config['EMAIL']['serverPass']
+    )
+    emailServer.sendmail(
+        site_config['EMAIL']['serverFromEmail'],
+        [user.email],
+        msg.as_string()
+    )
     emailServer.quit()
 
     return Response('OK', status=status.HTTP_200_OK)
@@ -177,9 +193,9 @@ class RecipeListEp(APIView):
         user = self.request.user
         recipes = user.recipes.all()
         recipeIds = [recipe.id for recipe in recipes]
-        
+
         # Recipes have to be marked to indicate whether they are included in the current shopping ist or not
-        # To this end, the shooping liist is retrieved first from the user profile
+        # To this end, the shopping list is retrieved first from the user profile
         # Then the set of recipe ids in the current shopping list is computed.
         # Based n this set the previously retrieved recipes are marked appropriately.
 

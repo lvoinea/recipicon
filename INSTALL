@@ -1,8 +1,0 @@
-1. Copy the api/_site.py template to api/site.py and fill in the appropriate values
-
-    serverHttpIp    : the IP of the server where the site runs (www.recipicon.com)
-    serverSmtp      : the host name of the SMTP server
-    serverPort      : SMTP TLS port
-    serverFromEmail : from email address
-    serverFromName  : from name
-    serverPass      : SMTP server pass
