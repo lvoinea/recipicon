@@ -1,7 +1,6 @@
 from __future__ import unicode_literals
 
 from django.db import models
-from django.utils.encoding import python_2_unicode_compatible
 
 class UserProfile(models.Model):
     created = models. DateTimeField(auto_now_add=True)
@@ -10,7 +9,6 @@ class UserProfile(models.Model):
     shop = models.ForeignKey('Shop', related_name='+', on_delete = models.SET_NULL, null = True)    
     shoppingList = models.ForeignKey('ShoppingList', related_name='+', on_delete = models.SET_NULL, null = True)
 
-@python_2_unicode_compatible 
 class Recipe(models.Model):
     name = models.CharField(max_length=128)
     category = models.CharField(max_length=32)
@@ -27,8 +25,8 @@ class Recipe(models.Model):
         
     def in_shopping_list(self):
         pass
-        
-@python_2_unicode_compatible         
+
+
 class Ingredient(models.Model):
     name = models.CharField(max_length=32)
     created = models. DateTimeField(auto_now_add=True)
@@ -45,7 +43,7 @@ class RecipeIngredient(models.Model):
     recipe =  models.ForeignKey('Recipe', related_name='recipe_ingredients', on_delete = models.CASCADE)
     ingredient = models.ForeignKey('Ingredient', related_name='recipe_ingredients', on_delete = models.CASCADE)
 
-@python_2_unicode_compatible         
+
 class ShoppingList(models.Model):
     name = models.CharField(max_length = 64)
     date = models.DateField(auto_now_add = True)
@@ -64,7 +62,7 @@ class ShoppingItem(models.Model):
     recipe =  models.ForeignKey('Recipe', related_name='+', on_delete = models.CASCADE, null = True)
     shoppingList = models.ForeignKey('ShoppingList', related_name='items', on_delete = models.CASCADE)
         
-@python_2_unicode_compatible         
+
 class Shop(models.Model):
     name = models.CharField(max_length=32)
     created = models. DateTimeField(auto_now_add=True)
@@ -74,7 +72,7 @@ class Shop(models.Model):
     def __str__(self):
         return self.name
         
-@python_2_unicode_compatible         
+
 class Location(models.Model):
     name = models.CharField(max_length=32)
     created = models. DateTimeField(auto_now_add=True)

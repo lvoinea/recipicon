@@ -1,0 +1,20 @@
+<div id='top' class="panel panel-info row">
+    <div class="btn-group btn-group-justified panel-heading nopadding" role="group" aria-label="...">
+      <a type="button" class="btn" role="button" ui-sref="recipes">
+       <span class="glyphicon glyphicon-list"></span>
+      </a>
+      <a type="button" class="btn" role="button" ui-sref="shopping-list({id:'_'})">
+       <span class="glyphicon glyphicon-shopping-cart"></span>
+      </a>
+      <a type="button" class="btn" role="button" ui-sref="statistics">
+       <span class="glyphicon glyphicon-stats"></span>
+      </a>
+      <a type="button" class="btn" role="button" ui-sref="user">
+       <span class="glyphicon glyphicon-user"></span>
+      </a>
+      <a type="button" class="btn" role="button" ui-sref="logout">
+        <span class="glyphicon glyphicon-off"></span>
+      </a>
+    </div>
+</div>
+<div uib-alert ng-repeat="alert in alerts" ng-class="'alert-' + (alert.type || 'warning')" close="vm.clearAlert($index)">{{alert.msg}}</div>

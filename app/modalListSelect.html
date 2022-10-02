@@ -1,0 +1,20 @@
+<div class="modal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" ng-click="close(null)" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">{{vm.title}}</h4>
+      </div>
+      <div class="modal-body">
+        <ul>
+            <li ng-repeat="location in vm.locations">
+                <a ng-click="vm.modalClose(location.id)">{{location.name}}</a>
+            </li>
+        </ul>
+      </div>
+      <div class="modal-footer">
+        <button type="button" ng-click="vm.modalClose(null)" class="btn btn-default" data-dismiss="modal">Cancel</button>       
+      </div>
+    </div>
+  </div>
+</div>

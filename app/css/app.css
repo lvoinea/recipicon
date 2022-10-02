@@ -1,0 +1,85 @@
+.gradient {
+    background: linear-gradient(#cceeff, #eeeeee); /* Standard syntax */
+}
+
+.move-up {
+    margin-top:-20vh;
+}
+
+.vertical-center {
+  min-height: 100%;  /* Fallback for browsers do NOT support vh unit */
+  min-height: 100vh; /* These two lines are counted as one :-)       */
+
+  display: flex;
+  align-items: center;
+}
+
+.glyphicon-refresh-animate {
+    -animation: spin 1.2s infinite linear;
+    -webkit-animation: spin2 1.2s infinite linear;
+}
+
+@-webkit-keyframes spin2 {
+    from { -webkit-transform: rotate(0deg);}
+    to { -webkit-transform: rotate(360deg);}
+}
+
+@keyframes spin {
+    from { transform: scale(1) rotate(0deg);}
+    to { transform: scale(1) rotate(360deg);}
+}
+
+button[disabled=disabled], button:disabled {
+    opacity: 0.45; 
+    cursor: not-allowed;
+}
+
+.selectable {
+    cursor: pointer;
+}
+
+.nopadding {
+   padding: 0 !important;
+   margin: 0 !important;
+}
+
+.header-button {
+    float: right;
+}
+
+.checked {
+    text-decoration: line-through;
+}
+
+.small-button {
+    margin: 0 !important;
+    padding: 2px !important;
+}
+
+.modal.ng-enter {
+  transition: opacity .5s ease-out;
+  opacity: 0;
+}
+.modal.ng-enter.ng-enter-active {
+  opacity: 1;
+}
+.modal.ng-leave {
+  transition: opacity .5s ease-out;
+  opacity: 1;
+}
+.modal.ng-leave.ng-leave-active {
+  opacity: 0;
+}
+
+.arc text {
+  font: 10px sans-serif;
+  text-anchor: middle;
+}
+
+.arc path {
+  stroke: #fff;
+}
+
+.right {
+    text-align: right;
+}

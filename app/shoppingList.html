@@ -1,0 +1,104 @@
+<div class="row" style="text-align:center;" ng-if="vm.isLoading()">   
+    <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span> Loading ...
+</div>
+<div ng-if="!vm.isLoading()">
+    <h3 class="text-center">
+        Shopping list {{vm.shoppingList.name}} </br>
+        <small>{{vm.shoppingList.date}}</small>
+    </h3>
+     <div class="panel">
+        <div class="btn-group btn-group-justified" role="group" aria-label="...">
+            <a type="button" class="btn btn-primary" ng-click="vm.edit()">
+                Edit
+            </a>
+            <a type="button" class="btn btn-primary" ng-click="vm.organize()">
+                Organize
+            </a>
+            <a type="button" class="btn btn-primary" ng-click="vm.create()">
+                New <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate" ng-if="vm.creating"></span>
+            </a>
+        </div>
+    </div>
+    <form name="shoppingList" novalidate>
+        <!-- ============================================ Recipes ===================================== -->
+        <div class="panel panel-default">
+            <div class="panel-heading panel-title">
+                Recipes <small>(serves)</small>
+            </div>
+            <div class="panel-body">
+                <ul>
+                    <li ng-repeat="item in vm.shoppingList.items | filter:{ingredient:null}">
+                       <a ui-sref="recipe({id:item.recipe.id})">
+                       {{item.recipe.name}}
+                       </a>
+                       ({{item.quantity}} serves)
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <!-- ============================================ Ingredients ===================================== -->
+        <div class="panel panel-default">
+            <div class="panel-heading panel-title">                
+                   Shop
+                   <span ng-if="vm.getShops().length > 0">
+                        <select 
+                                ng-model="vm.selectedShopId"                           
+                                ng-options="shop.id as shop.name for shop in vm.getShops()" 
+                                ng-change="vm.setShop()"
+                                >
+                        </select>
+                    </span>
+            </div>
+
+            <div class="panel-body" style="text-align:center;" ng-if="vm.selectingShop">
+                 <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate" ></span>
+            </div>
+
+            <div class="panel-body" ng-if="!vm.selectingShop">
+               <!-- ============================== known location ======== -->
+              <table class="table table-striped" ng-repeat="location in vm.getShopLocations(vm.selectedShopId) | orderBy : 'name'">
+                <tbody>
+                  <tr>
+                    <td>{{location.name}}</td>
+                  </tr>
+                  <tr>
+                    <td>
+                        <ul>
+                            <li ng-repeat="ingredient in vm.getListIngredients()"  ng-if="vm.ingredientInLocation(ingredient.id, location.id)">
+                                <div class="checkbox">
+                                    <input type="checkbox" ng-model="vm.getCheckedItems[ingredient.id]">
+                                     <span ng-class="{checked: vm.isItemChecked(ingredient.id)}">{{vm.getIngredient(ingredient.id)}} ( {{ingredient.quantity}} )</span>
+                                </div>                               
+                            </li>
+                       </ul> 
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <!-- ================================= unnnsorted ======== -->
+               <table class="table table-striped">
+                <tbody>
+                  <tr>
+                    <td>unsorted</td>
+                  </tr>
+                  <tr>
+                    <td>
+                        <ul>
+                            <li ng-repeat="ingredient in vm.getListIngredients()" ng-if="!vm.ingredientInShop(ingredient.id,vm.selectedShopId)">
+                               <div class="checkbox">
+                                    <input type="checkbox" ng-model="vm.getCheckedItems[ingredient.id]">
+                                    <span ng-class="{checked: vm.isItemChecked(ingredient.id)}">{{vm.getIngredient(ingredient.id)}} ( {{ingredient.quantity}} )</span>
+                                </div>                               
+                            </li>
+                       </ul> 
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            
+            </div>        
+    </form>
+    
+</div>
+
+
