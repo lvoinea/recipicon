@@ -1,0 +1,28 @@
+@media (max-width: 768px) {
+  .btn-responsive {
+	padding: 10px 16px;
+	font-size: 18px;
+	line-height: 1.3333333;
+	border-radius: 6px;
+  }
+  
+  .txt-responsive {
+	font-size: 20px;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 992px) {
+  .btn-responsive {
+	padding: 5px 10px;
+	font-size: 12px;
+	line-height: 1.5;
+	border-radius: 3px;
+  }
+  
+  .txt-responsive {
+	font-size: 14px;
+  }
+}
+
+.stroked{ text-decoration: line-through; }
+

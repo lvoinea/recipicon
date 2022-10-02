@@ -45,8 +45,10 @@ def LoginEp(request):
     if user is not None:
         if user.is_active:
             login(request, user)
-            token = Token.objects.get_or_create(user=user)
-            return Response(token[0].key, status=status.HTTP_200_OK)
+            # Token is created but not shared with the requester
+            token = Token.objects.get_or_create(user=user)[0]
+            token.save()
+            return Response(status=status.HTTP_200_OK)
         else:
             return Response('Account has been disabled', status=status.HTTP_403_FORBIDDEN)            
     else:
@@ -77,8 +79,9 @@ def SignUpEp(request):
     if user is not None:
         if user.is_active:
             login(request, user)
+            # Token is created but not shared with the requester
             token = Token.objects.get_or_create(user=user)
-            return Response(token[0].key, status=status.HTTP_200_OK)
+            return Response(status=status.HTTP_200_OK)
         else:
             return Response('Account has been disabled', status=status.HTTP_403_FORBIDDEN)
     else:
@@ -86,7 +89,7 @@ def SignUpEp(request):
 
 @api_view(['GET'])
 def LogoutEp(request):
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         token = Token.objects.get_or_create(user=request.user)
         token[0].delete()
     logout(request)
@@ -112,26 +115,40 @@ def PassResetEp(request):
     if not ViewUtils.isValidResetRequest(resetRequest):
         return Response('invalid reset request', status=status.HTTP_400_BAD_REQUEST)
 
+    # Username shold always be valid
     username = resetRequest['username']
-    tokenId = resetRequest['token']
-    password = resetRequest['password']
-    confirmPassword = resetRequest['confirmPassword']
-
-    if (password != confirmPassword):
-        return Response('the provided passwords are not identical', status=status.HTTP_400_BAD_REQUEST)
-
     if (not User.objects.filter(username=username).exists()):
         return Response('the provided id is unknown', status=status.HTTP_400_BAD_REQUEST)
 
-    token = Token.objects.get_or_create(user__username=username)
+    # Verify password as by login if provided
+    password = resetRequest.get('password', None)
+    if password:
+        user = authenticate(username=username, password=password)
+        if user is not None:
+            passwordNew = resetRequest.get('passwordNew', None)
+            user.set_password(passwordNew)
+            user.save()
+        else:
+            return Response('the provided password is not correct', status=status.HTTP_401_UNAUTHORIZED)
 
-    if (token[0].key != tokenId):
-        return Response('the provided credentials are invalid', status=status.HTTP_401_UNAUTHORIZED)
 
-    user = User.objects.get(username=username)
-    user.set_password(password)
-    user.save()
+    # Verify token if provided
+    # This happens when requesting a reset via email.
+    tokenId = resetRequest.get('token', None)
+    if tokenId:
+        token = Token.objects.get_or_create(user__username=username)
+        if (token[0].key != tokenId):
+            return Response('the provided credentials are invalid', status=status.HTTP_401_UNAUTHORIZED)
 
+    # Always update the token
+    # This can be achieved by setting the key on None and then saving it.
+    # The key will be then automatically generated.
+    token = Token.objects.get(user__username=username)
+    if token:
+        # delete the current token if it exists as it might be already compromised
+        token.delete()
+    token = Token.objects.get_or_create(user=user)[0]
+    token.save()
     return Response('OK', status=status.HTTP_200_OK)
 
 @api_view(['POST'])
@@ -775,7 +792,7 @@ class ViewUtils():
 
     @staticmethod
     def isValidResetRequest(resetRequest):
-        return set(resetRequest.keys()).issubset(set(['username', 'token', 'password', 'confirmPassword']))
+        return set(resetRequest.keys()).issubset(set(['username', 'password', 'token', 'passwordNew']))
 
     @staticmethod
     def isValidRecipeIngredient(ingredient):

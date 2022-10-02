@@ -1,0 +1,38 @@
+<div class="row" style="text-align:center;" ng-if="vm.loading">   
+    <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span> Loading ...
+</div>
+
+<div ng-if="!vm.loading">
+    <div class="well well-sm">
+        <strong>Recipes:</strong> <a ui-sref="recipes">{{vm.numberRecipes}}</a>    
+    </div>
+</div>
+
+<div style="text-align:center;" ng-if="!vm.loading">
+    <em> per category </em>
+</div>
+
+<div class="row" style="text-align:center;">
+    <div id="recipeStatPanel"></div>
+</div>
+
+<div ng-if="!vm.loading">
+    <div class="well well-sm">
+        <strong>Shopping lists:</strong> {{vm.numberShoppingLists}}
+    </div>
+</div>
+
+<div ng-if="!vm.loading">
+    <div class="well well-sm">    
+        <strong>Ingredients:</strong> {{vm.numberIngredients}}
+    </div>
+</div>
+
+<div style="text-align:center;" ng-if="!vm.loading">
+    <p><em> ranking on number of recipes </em></p>
+</div>
+
+<div class="row" style="text-align:center;">
+    <div id="ingredientsStatPanel"></div>
+</div>
+

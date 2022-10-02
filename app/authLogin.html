@@ -1,0 +1,162 @@
+﻿<div class="vertical-center gradient row">
+    <div id='top' class="col-xs-12 col-md-4 col-md-offset-4 col-lg-4 col-lg-offset-4 move-up">
+
+        <div class="right"><small class="text-muted">v1.0</small></div>
+        <h1 class="display-1">Recipicon</h1>
+        <div><em>Stores recipes. Makes shopping lists.</em></div>
+        <img class="img-responsive" src="img/recepicon_s.png" alt="Recipicon" />
+
+        <div uib-alert ng-repeat="alert in alerts" ng-class="'alert-' + (alert.type || 'warning')" close="vm.clearAlert($index)">{{alert.msg}}</div>
+        <div align="center" ng-show="vm.forgot">Forgot your password? <a ng-click="vm.setMode('request')">Request a password reset!</a></div>
+
+        <form name="form" ng-submit="" role="form">
+
+            <!-- ------------------------------------------------- User account = email -->
+            <div class="form-group"
+                 ng-class="{ 'has-error': form.username.$dirty && form.username.$error.required }"
+                 ng-show="(vm.mode=='signup') || (vm.mode=='signin') || (vm.mode=='request')">
+
+                <label for="username">Email</label>
+                <input type="text" name="username" id="username"
+                       autocorrect="off"
+                       autocapitalize="none"
+                       class="form-control"
+                       ng-model="vm.username"
+                       required />
+
+                <span ng-show="form.username.$dirty && form.username.$error.required" class="help-block">
+                    Email is required
+                </span>
+            </div>
+
+            <!--
+            <div class="form-group" ng-show="vm.mode=='reset'">
+                <label for="reset_email">Email</label>
+                <input type="text" name="reset_email" id="reset_email" c
+                       lass="form-control"
+                       ng-model="vm.username"/>
+            </div>
+            -->
+
+            <!-- ---------------------------------------------------------- Passwords -->
+
+            <!-- Need to ask for old password in case of password reset -->
+            <div class="form-group"
+                 ng-class="{ 'has-error': form.password.$dirty && form.password.$error.required }"
+                 ng-show="(vm.mode=='signup') || (vm.mode=='signin') || (vm.mode=='reset')">
+
+                <label for="password">
+                    <span ng-show="(vm.mode=='reset')">Old password</span>
+                    <span ng-show="(vm.mode!='reset')">Password</span>
+                </label>
+                <input type="password" name="password" id="password"
+                       class="form-control"
+                       ng-model="vm.password"
+                       required/>
+
+                <span ng-show="form.password.$dirty && form.password.$error.required" class="help-block">
+                    Password is required
+                </span>
+            </div>
+
+            <!-- New password (in case of reset) -->
+            <div class="form-group"
+                 ng-show="(vm.mode=='reset')">
+
+                <label for="password_new">
+                    New password
+                </label>
+                <input type="password" name="password_new" id="password_new"
+                       class="form-control"
+                       ng-model="vm.passwordNew"
+                       minlength="6"/>
+
+                <span ng-show="form.password_new.$dirty && form.password_new.$error.minlength" class="help-block">
+                    New password should be at least 6 characters long
+                </span>
+            </div>
+
+            <!-- Password confirmation (in case of sign-up or reset) -->
+            <div class="form-group"
+                 ng-class="{ 'has-error': form.confirm_password.$dirty && (vm.password != vm.confirmPassword) }"
+                 ng-show="(vm.mode=='signup') || (vm.mode=='reset')">
+
+                <label for="confirm_password">
+                    <span ng-show="(vm.mode=='reset')">Confirm new password</span>
+                    <span ng-show="(vm.mode!='reset')">Confirm password</span>
+                </label>
+                <input type="password" name="confirm_password" id="confirm_password" class="form-control"
+                       ng-model="vm.confirmPassword"
+                       ng-minlength="vm.minPasswordLength"/>
+
+                <span ng-show="(vm.password!=vm.confirmPassword) && (vm.mode!='reset')" class="help-block">
+                    Passwords should be identical.
+                </span>
+                <span ng-show="(vm.passwordNew!=vm.confirmPassword) && (vm.mode=='reset')" class="help-block">
+                    Passwords should be identical.
+                </span>
+                <span ng-show="form.confirm_password.$dirty && !form.confirm_password.$valid" class="help-block">
+                    Password should be at least {{vm.minPasswordLength}} characters
+                </span>
+            </div>
+
+            <!-- ---------------------------------------------------- Terms of service -->
+            <div class="form-group" ng-show="(vm.mode=='signup')">
+                <input type="checkbox" ng-model="vm.agreement"/>
+                <span>I have read and I accept the service <a ng-click="vm.modalTerms()">terms and conditions</a>.</span>
+            </div>
+
+            <div class="form-actions">
+                <!-- ---------------------------------------------------------- Log in -->
+                <div align="center" ng-show="vm.mode == 'signin'">
+                    <p>
+                        <button ng-disabled="form.$invalid || vm.dataLoading" class="btn btn-primary" ng-click="vm.login()">
+                            Login
+                            <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate" ng-if="vm.dataLoading"/>
+                        </button>
+                    </p>
+                    <p>
+                        No account yet? <a ng-click="vm.setMode('signup')">Sign-up!</a>
+                    </p>
+                </div>
+                <!-- ---------------------------------------------------------- Sign up -->
+                 <div align="center" ng-show="vm.mode == 'signup'">
+                     <p>
+                        <button ng-disabled="form.$invalid || vm.dataLoading" class="btn btn-primary" ng-click="vm.signup()">
+                            Sign-up
+                            <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate" ng-if="vm.dataLoading"/>
+                        </button>
+                     </p>
+                    <p>
+                        Already have an account? <a ng-click="vm.setMode('signin')">Sign in!</a>
+                    </p>
+                </div>
+                <!-- ---------------------------------------------------------- Send password reset request -->
+                 <div align="center" ng-show="vm.mode == 'request'">
+                     <p>
+                        <button ng-disabled="form.$invalid || vm.dataLoading" class="btn btn-primary" ng-click="vm.requestPasswordRequest()">
+                            Send pasword reset request
+                            <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate" ng-if="vm.dataLoading"/>
+                        </button>
+                    </p>
+                    <p>
+                        No account yet? <a ng-click="vm.setMode('signup')">Sign-up!</a>
+                    </p>                        
+                </div>
+                <!-- ---------------------------------------------------------- Reset password -->
+                <div align="center" ng-show="vm.mode == 'reset'">
+                     <p>
+                        <button ng-disabled="form.$invalid || vm.dataLoading" class="btn btn-primary" ng-click="vm.resetPassword()">
+                            Reset password
+                            <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate" ng-if="vm.dataLoading"/>
+                        </button>
+                    </p>
+                    <p>
+                        Different user? <a ng-click="vm.username='';vm.setMode('signin')">Sign in!</a>
+                    </p>
+                </div>
+                <!-- ------------------------------------------------------------------------- -->
+            </div>
+        </form>
+    </div>
+</div>
