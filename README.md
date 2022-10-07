@@ -66,7 +66,7 @@ The recommended way to install the application is by making use of the
 provided Docker image.
 
 ```shell script
-docker pull ...
+docker pull lvoinea/recipicon:latest
 ```
 
 The application requires a `Docker` volume to store:
@@ -156,7 +156,7 @@ the application by issuing the command:
 docker run -d --rm \
     -p 8080:5000 \
     -v $(pwd)/local:/storage \
-    recipicon /storage/config/server_config.py recipicon.wsgi
+    lvoinea/recipicon /storage/config/server_config.py recipicon.wsgi
 ```
 
 > **NOTE**: The command above assumes the required `Docker` volume is mounted

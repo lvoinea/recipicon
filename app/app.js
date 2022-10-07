@@ -233,14 +233,7 @@
     run.$inject = ['$rootScope', '$location', '$cookieStore', '$http'];
     function run($rootScope, $location, $cookieStore, $http) {
 
-        //Configure service path
-        var host = window.location.host;
-        if (host.startsWith("127.") || host.startsWith("192.")){
-            $rootScope.service = '/api';            
-        } 
-        else {
-            $rootScope.service = '/service/api';
-        }
+        $rootScope.service = '/api';
         $rootScope.recipes = null;          // The list of known recipes
         $rootScope.recipe = null;           // Currently selected entitites
         $rootScope.ingredients = null;      // List of user known ingredients (id,name, [locationId])
