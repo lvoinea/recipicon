@@ -9,6 +9,8 @@ of walking through a particular store. This enables users to optimize their
 shopping experience for speed, specially when this involves visiting several
 stores. 
 
+You can see **Recipicon** in action [here](https://recipicon.technolab.top).
+
 ### History
 
 I've started this project in 2016 to solve a concrete problem I had at that 
