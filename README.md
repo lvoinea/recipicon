@@ -9,6 +9,8 @@ of walking through a particular store. This enables users to optimize their
 shopping experience for speed, specially when this involves visiting several
 stores. 
 
+You can see **Recipicon** in action [here](https://recipicon.technolab.top).
+
 ### History
 
 I've started this project in 2016 to solve a concrete problem I had at that 
@@ -66,7 +68,7 @@ The recommended way to install the application is by making use of the
 provided Docker image.
 
 ```shell script
-docker pull ...
+docker pull lvoinea/recipicon:latest
 ```
 
 The application requires a `Docker` volume to store:
@@ -156,7 +158,7 @@ the application by issuing the command:
 docker run -d --rm \
     -p 8080:5000 \
     -v $(pwd)/local:/storage \
-    recipicon /storage/config/server_config.py recipicon.wsgi
+    lvoinea/recipicon /storage/config/server_config.py recipicon.wsgi
 ```
 
 > **NOTE**: The command above assumes the required `Docker` volume is mounted
