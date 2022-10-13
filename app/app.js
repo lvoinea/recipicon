@@ -147,7 +147,7 @@
             })
 
             .state('login', {
-                url: '/login',
+                url: '/login?redirect',
                 params: {
                         'username': '',
                         'token':''

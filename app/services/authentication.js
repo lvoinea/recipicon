@@ -5,8 +5,8 @@
         .module('app')
         .factory('AuthenticationService', AuthenticationService);
 
-    AuthenticationService.$inject = ['$http', '$cookieStore', '$rootScope', '$timeout'];
-    function AuthenticationService($http, $cookieStore, $rootScope, $timeout) {
+    AuthenticationService.$inject = ['$http', '$cookieStore', '$location', '$rootScope', '$timeout'];
+    function AuthenticationService($http, $cookieStore, $location, $rootScope, $timeout) {
         var service = {};
 
         service.login = login;
@@ -17,6 +17,7 @@
         service.requestPasswordReset = requestPasswordReset;
         service.setCredentials = setCredentials;
         service.clearCredentials = clearCredentials;
+        service.ensureAuthorized = ensureAuthorized;
 
         return service;
 
@@ -71,6 +72,11 @@
         function clearCredentials() {
             $rootScope.auth = {};
             $cookieStore.remove('csrftoken');
+        }
+
+        // Request a successful login before returning to the current location
+        function ensureAuthorized() {
+            $location.url(`/login?redirect=${$location.url()}`);
         }
     }
 

@@ -18,6 +18,7 @@
         vm.minPasswordLength = 3;
         vm.username = $stateParams.username;
         vm.token = $stateParams.token;
+        vm.redirect = $stateParams.redirect;
         vm.forgot = false;
         vm.agreement = false;
 
@@ -36,14 +37,19 @@
             vm.dataLoading = true;
             AuthenticationService.login(vm.username, vm.password)
             .then(function(response){
-                $location.path('/recipes');
+                if (vm.redirect){
+                    $location.url(vm.redirect);
+                }
+                else {
+                    $location.url('/recipes');
+                }
                 AuthenticationService.setCredentials(vm.username);
             })
             .catch(function(response) {               
                 if (response.status == 401){
                    vm.forgot = true;
                 }
-                AlertService.setAlert('ERROR: Could not login (' + response.data + ').');
+                AlertService.setAlert(`ERROR: Could not login (${error.status})`);
             })
             .finally(function(){
                 vm.dataLoading = false;
@@ -66,7 +72,7 @@
                     AuthenticationService.setCredentials(vm.username)
                 })
                 .catch(function(response){
-                    AlertService.setAlert('ERROR: Could not signup (' + response.data + ').'); 
+                    AlertService.setAlert(`ERROR: Could not signup (${error.status})`);
                 })
                 .finally(function(){
                     vm.dataLoading = false;
@@ -82,7 +88,7 @@
                     $location.path('/out');
                 })
                 .catch(function(response){
-                    AlertService.setAlert('ERROR: Could not request password reset (' + response.data + ').'); 
+                    AlertService.setAlert(`ERROR: Could not request password reset (${error.status})`);
                 })
                 .finally(function(){
                     vm.dataLoading = false;
@@ -101,7 +107,7 @@
                     $state.go('login',{'username': vm.username})
                 })
                 .catch(function(response){
-                    AlertService.setAlert('ERROR: Could not reset password (' + response.data + ').'); 
+                    AlertService.setAlert(`ERROR: Could not reset password (${error.status})`);
                 })
                 .finally(function(){
                     vm.dataLoading = false;

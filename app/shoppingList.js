@@ -3,9 +3,9 @@
     
     angular.module('app').controller('ShoppingListController', ShoppingListController);
     
-    ShoppingListController.$inject = ['DataService', 'AlertService', '$log', '$state', '$stateParams', 'ModalService'];
+    ShoppingListController.$inject = ['DataService', 'AlertService', 'AuthenticationService', '$log', '$state', '$stateParams', 'ModalService'];
 
-    function ShoppingListController(DataService, AlertService, $log, $state, $stateParams, ModalService){
+    function ShoppingListController(DataService, AlertService, AuthenticationService, $log, $state, $stateParams, ModalService){
         var vm = this;
         
         vm.localId = 0;
@@ -68,6 +68,8 @@
         vm.saving = false;
         vm.creating = false;
         vm.showingShopEdits = false;
+
+        vm.isAuth = true;
         
         //---------------------------------------------- Loading
         _loadData($stateParams.id);
@@ -85,7 +87,13 @@
                 vm.getCheckedItems = DataService.getCheckedItems();
             })
             .catch(function(error){
-                AlertService.setAlert('ERROR: Could not load shopping list (code  ' + error.status + ').');
+                if (error.status == 403) {
+                    if (vm.isAuth) AuthenticationService.ensureAuthorized();
+                    vm.isAuth = false;
+                }
+                else {
+                    AlertService.setAlert(`ERROR: Could not load shopping list (${error.status})`);
+                }
             })            
             .finally(function(){
                  vm.loading.shoppingList = false;   
@@ -97,7 +105,13 @@
                 vm.shops = shops;
             })
             .catch(function(error){
-                AlertService.setAlert('ERROR: Could not load list of shops (code  ' + error.status + ').');
+                if (error.status == 403) {
+                    if (vm.isAuth) AuthenticationService.ensureAuthorized();
+                    vm.isAuth = false;
+                }
+                else {
+                    AlertService.setAlert(`ERROR: Could not load list of shops (${error.status})`);
+                }
             })
             .finally(function(){
                 vm.loading.shops = false;
@@ -109,7 +123,13 @@
                 vm.selectedShopId = currentShop.id;
             })
             .catch(function(error){
-                AlertService.setAlert('ERROR: Could not load current shop (code  ' + error.status + ').');
+                if (error.status == 403) {
+                    if (vm.isAuth) AuthenticationService.ensureAuthorized();
+                    vm.isAuth = false;
+                }
+                else {
+                    AlertService.setAlert(`ERROR: Could not load current shop (${error.status})`);
+                }
             })
             .finally(function(){
                 vm.loading.currentShop = false;
@@ -121,7 +141,13 @@
                 vm.locations = locations;   
             })
             .catch(function(error){
-                AlertService.setAlert('ERROR: Could not load list of locations (code  ' + error.status + ').');
+                if (error.status == 403) {
+                    if (vm.isAuth) AuthenticationService.ensureAuthorized();
+                    vm.isAuth = false;
+                }
+                else {
+                    AlertService.setAlert(`ERROR: Could not load list of locations (${error.status})`);
+                }
             })
             .finally(function(){
                  vm.loading.locations = false;
@@ -133,7 +159,13 @@
                 vm.ingredients = ingredients;                              
             })
             .catch(function(error){
-                AlertService.setAlert('ERROR: Could not load ingredients (code  ' + error.status + ').');
+                if (error.status == 403) {
+                    if (vm.isAuth) AuthenticationService.ensureAuthorized();
+                    vm.isAuth = false;
+                }
+                else {
+                    AlertService.setAlert(`ERROR: Could not load ingredients (${error.status})`);
+                }
             })            
             .finally(function(){
                 vm.loading.ingredients = false;   
@@ -211,7 +243,12 @@
                     $state.go('shopping-list',{'id' : vm.shoppingList.id}); 
                 })
                 .catch(function(error){
-                    AlertService.setAlert('ERROR: Could not save shopping list (code ' + error.status + ').');
+                    if (error.status == 403) {
+                        AuthenticationService.ensureAuthorized();
+                    }
+                    else {
+                        AlertService.setAlert(`ERROR: Could not save shopping list (${error.status})`);
+                    }
                 })
                 .finally(function(){
                     vm.saving = false;
@@ -238,7 +275,12 @@
                     $state.go('shopping-list',{'id' : '_'},{reload: true}); 
                 })
                 .catch(function(error){
-                    AlertService.setAlert('ERROR: Could not create new shopping list (code ' + error.status + ').');
+                    if (error.status == 403) {
+                        AuthenticationService.ensureAuthorized();
+                    }
+                    else {
+                        AlertService.setAlert(`ERROR: Could not create new shopping list (${error.status})`);
+                    }
                 })
                 .finally(function(){
                     vm.creating = false;
@@ -263,7 +305,12 @@
                 //nop
             })
             .catch(function(error){
-                AlertService.setAlert('ERROR: Could not select shop (code  ' + error.status + ').');
+                if (error.status == 403) {
+                    AuthenticationService.ensureAuthorized();
+                }
+                else {
+                    AlertService.setAlert(`ERROR: Could not select shop (${error.status})`);
+                }
             })
             .finally(function(){
                 vm.selectingShop = false;
@@ -297,7 +344,12 @@
                         setShop();
                     })
                     .catch(function(error){
-                        AlertService.setAlert('ERROR: Could not create new shop (code  ' + error.status + ').');
+                        if (error.status == 403) {
+                            AuthenticationService.ensureAuthorized();
+                        }
+                        else {
+                            AlertService.setAlert(`ERROR: Could not create new shop (${error.status})`);
+                        }
                     })
                     .finally(function(){
                         vm.addingShop = false;
@@ -331,7 +383,12 @@
                         shop.name = resultShop.name;
                     })
                     .catch(function(error){
-                        AlertService.setAlert('ERROR: Could not load updated shop (code  ' + error.status + ').');
+                        if (error.status == 403) {
+                            AuthenticationService.ensureAuthorized();
+                        }
+                        else {
+                            AlertService.setAlert(`ERROR: Could not load updated shop (${error.status})`);
+                        }
                     })
                     .finally(function(){
                         vm.editingShop = false;
@@ -361,7 +418,12 @@
                         //nop
                     })
                     .catch(function(error){
-                        AlertService.setAlert('ERROR: Could not delete shop (code  ' + error.status + ').');
+                        if (error.status == 403) {
+                            AuthenticationService.ensureAuthorized();
+                        }
+                        else {
+                            AlertService.setAlert(`ERROR: Could not delete shop (${error.status})`);
+                        }
                     })
                     .finally(function(){
                         vm.deletingShop = null;
@@ -395,7 +457,12 @@
                         // Nop
                     })
                     .catch(function(error){
-                        AlertService.setAlert('ERROR: Could not create new tag (code  ' + error.status + ').');
+                        if (error.status == 403) {
+                            AuthenticationService.ensureAuthorized();
+                        }
+                        else {
+                            AlertService.setAlert(`ERROR: Could not create new tag (${error.status})`);
+                        }
                     })
                     .finally(function(){
                         vm.addingLocation = false;
@@ -428,7 +495,12 @@
                         location.name = resultLocation.name;
                     })
                     .catch(function(error){
-                        AlertService.setAlert('ERROR: Could not load updated tag (code  ' + error.status + ').');
+                        if (error.status == 403) {
+                            AuthenticationService.ensureAuthorized();
+                        }
+                        else {
+                            AlertService.setAlert(`ERROR: Could not load updated tag (${error.status})`);
+                        }
                     })
                     .finally(function(){
                         vm.editingLocation = false;
@@ -464,7 +536,12 @@
                         vm.ingredients[ingredientId] = newIngredient;
                     })
                     .catch(function(error){
-                        AlertService.setAlert('ERROR: Could not update ingredient tag (code  ' + error.status + ').');
+                        if (error.status == 403) {
+                            AuthenticationService.ensureAuthorized();
+                        }
+                        else {
+                            AlertService.setAlert(`ERROR: Could not update ingredient tag (${error.status})`);
+                        }
                     })
                     .finally(function(){
                         vm.settingLocation = null;
@@ -494,7 +571,12 @@
                         //nop
                     })
                     .catch(function(error){
-                        AlertService.setAlert('ERROR: Could not delete tag (code  ' + error.status + ').');
+                        if (error.status == 403) {
+                            AuthenticationService.ensureAuthorized();
+                        }
+                        else {
+                            AlertService.setAlert(`ERROR: Could not delete tag (${error.status})`);
+                        }
                     })
                     .finally(function(){
                         vm.editingLocation = null;
@@ -519,7 +601,12 @@
                     });
             })
             .catch(function(error){
-                AlertService.setAlert('ERROR: Could not delete tag (code  ' + error.status + ').');
+                if (error.status == 403) {
+                    AuthenticationService.ensureAuthorized();
+                }
+                else {
+                    AlertService.setAlert(`ERROR: Could not delete tag (${error.status})`);
+                }
             })
             .finally(function(){
                 vm.editingLocation = null;
@@ -587,7 +674,12 @@
                     angular.element('#'+focusField).focus();
                 })
                 .catch(function(error){
-                    AlertService.setAlert('ERROR: Could not retrieve ingredient (code  ' + error.status + ').');
+                    if (error.status == 403) {
+                        AuthenticationService.ensureAuthorized();
+                    }
+                    else {
+                        AlertService.setAlert(`ERROR: Could not retrieve ingredient (${error.status})`);
+                    }
                 })
                 .finally(function(){
                     vm.addingItem = null;

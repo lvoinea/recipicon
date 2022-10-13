@@ -3,9 +3,9 @@
     
     angular.module('app').controller('RecipesController', RecipesController);
     
-    RecipesController.$inject = ['DataService', '$log', '$state'];
+    RecipesController.$inject = ['$location', '$log', '$state', 'AlertService', 'AuthenticationService', 'DataService'];
 
-    function RecipesController(DataService,$log,$state){
+    function RecipesController($location, $log, $state, AlertService, AuthenticationService, DataService){
         var vm = this;
         
         vm.recipes = [];
@@ -31,7 +31,12 @@
                     vm.recipes = recipes;
                 })
                 .catch(function(error){
-                    $log.error('Could not load recipe list');
+                    if (error.status == 403){
+                        AuthenticationService.ensureAuthorized();
+                    }
+                    else {
+                        AlertService.setAlert(`ERROR: Could not load recipe list (${error.status})`);
+                    }
                 })
                 .finally(function(){
                     vm.loading = false;
@@ -51,7 +56,13 @@
             if (recipe.in_shopping_list){
                 DataService.addShoppingListRecipe(recipe.id)
                 .catch(function(error){
-                    AlertService.setAlert('ERROR: Could not add receipe to shoopping list  (code ' + error.status + ').');
+                    if (error.status == 403){
+                        AuthenticationService.ensureAuthorized();
+                    }
+                    else {
+                        AlertService.setAlert(`ERROR: Could not add recipe to shopping list (${error.status})`);
+                    }
+
                 })
                 .finally(function(){
                     vm.selecting = null;
@@ -60,7 +71,12 @@
             else if (!recipe.in_shopping_list){
                 DataService.removeShoppingListRecipe(recipe.id)
                 .catch(function(error){
-                    AlertService.setAlert('ERROR: Could not remove recipe from shoopping list  (code ' + error.status + ').');
+                    if (error.status == 403){
+                        AuthenticationService.ensureAuthorized();
+                    }
+                    else {
+                        AlertService.setAlert(`ERROR: Could not remove recipe from shopping list (${error.status})`);
+                    }
                 })
                 .finally(function(){
                     vm.selecting = null;

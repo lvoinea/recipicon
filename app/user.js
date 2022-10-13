@@ -28,7 +28,7 @@
                 $location.path('/login');
             })
             .catch(function(response){
-                 AlertService.setAlert('ERROR: Could not close up account.');
+                 AlertService.setAlert(`ERROR: Could not close up account (${error.status})`);
             })
             .finally(function(){
                 vm.closingOut = false;

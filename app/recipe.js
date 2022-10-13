@@ -3,9 +3,9 @@
     
     angular.module('app').controller('RecipeController', RecipeController);
     
-    RecipeController.$inject = ['DataService', '$log', '$state', '$stateParams','$q','AlertService','Upload'];
+    RecipeController.$inject = ['DataService', '$log', '$state', '$stateParams','$q','AlertService', 'AuthenticationService', 'Upload'];
 
-    function RecipeController(DataService, $log, $state, $stateParams, $q, AlertService, Upload){
+    function RecipeController(DataService, $log, $state, $stateParams, $q, AlertService, AuthenticationService, Upload){
         var vm = this;
         
         vm.localId = 0;
@@ -38,6 +38,8 @@
         vm.selecting = false;
         vm.adding = false;
         vm.settingImage = false;
+
+        vm.isAuth = true;
         
         function _getLocalId(){
             vm.localId++;
@@ -57,18 +59,30 @@
                 vm.recipeDescription = vm.recipe.description.split('\n');
             })
             .catch(function(error){
-                AlertService.setAlert('ERROR: Could not load recipe (code  ' + error.status + ').');
+                if (error.status == 403) {
+                    if (vm.isAuth) AuthenticationService.ensureAuthorized();
+                    vm.isAuth = false;
+                }
+                else {
+                    AlertService.setAlert(`ERROR: Could not load recipe (${error.status})`);
+                }
             })            
             .finally(function(){
                  vm.loading.recipe = false;   
-            }); 
+            });
 
             //-------------------------- load recipe list
-             DataService.getRecipes()
+            DataService.getRecipes()
             .then(function(recipes) {
             })
             .catch(function(error){
-                $log.error('Could not load recipe list');
+                if (error.status == 403) {
+                    if (vm.isAuth) AuthenticationService.ensureAuthorized();
+                    vm.isAuth = false;
+                }
+                else {
+                    AlertService.setAlert(`ERROR: Could not load recipe list (${error.status})`);
+                }
             })
             .finally(function(){
                 vm.loading.recipeList = false;
@@ -80,7 +94,13 @@
                 vm.ingredients = ingredients;                              
             })
             .catch(function(error){
-                AlertService.setAlert('ERROR: Could not load ingredients (code  ' + error.status + ').');
+                if (error.status == 403) {
+                    if (vm.isAuth) AuthenticationService.ensureAuthorized();
+                    vm.isAuth = false;
+                }
+                else {
+                    AlertService.setAlert(`ERROR: Could not load ingredients (${error.status})`);
+                }
             })            
             .finally(function(){
                  vm.loading.ingredients = false;   
@@ -107,7 +127,12 @@
                     $state.go('recipe',{'id' : newRecipe.id}); 
                 })
                 .catch(function(error){
-                    AlertService.setAlert('ERROR: Could not save recipe (code ' + error.status + ').');
+                    if (error.status == 403){
+                        AuthenticationService.ensureAuthorized();
+                    }
+                    else {
+                        AlertService.setAlert(`ERROR: Could not save recipe (${error.status})`);
+                    }
                 })
                 .finally(function(){
                     vm.saving = false;
@@ -133,7 +158,12 @@
                     $state.go('recipes');
                 })
                 .catch(function(error){
-                    AlertService.setAlert('ERROR: Could not delete recipe  (code ' + error.status + ').');
+                    if (error.status == 403){
+                        AuthenticationService.ensureAuthorized();
+                    }
+                    else {
+                        AlertService.setAlert(`ERROR: Could not delete recipe (${error.status})`);
+                    }
                 })
                 .finally(function(){
                     vm.deleting = false;
@@ -194,7 +224,12 @@
                     angular.element('#'+focusField).focus();
                 })
                 .catch(function(error){
-                    AlertService.setAlert('ERROR: Could not add ingredient (code  ' + error.status + ').');
+                    if (error.status == 403){
+                        AuthenticationService.ensureAuthorized();
+                    }
+                    else {
+                         AlertService.setAlert(`ERROR: Could not add ingredient (${error.status})`);
+                    }
                 })
                 .finally(function(){
                     vm.adding = null;
@@ -210,7 +245,12 @@
                     vm.recipe.in_shopping_list = true;
                 })
                 .catch(function(error){
-                    AlertService.setAlert('ERROR: Could not add receipe to shoopping list  (code ' + error.status + ').');
+                    if (error.status == 403){
+                        AuthenticationService.ensureAuthorized();
+                    }
+                    else {
+                         AlertService.setAlert(`ERROR: Could not add recipe to shopping list (${error.status})`);
+                    }
                 })
                 .finally(function(){
                     vm.selecting = false;
@@ -225,7 +265,12 @@
                     vm.recipe.in_shopping_list = false;
                 })
                 .catch(function(error){
-                    AlertService.setAlert('ERROR: Could not remove recipe from shoopping list  (code ' + error.status + ').');
+                    if (error.status == 403){
+                        AuthenticationService.ensureAuthorized();
+                    }
+                    else {
+                         AlertService.setAlert(`ERROR: Could not remove recipe from shopping list (${error.status})`);
+                    }     
                 })
                 .finally(function(){
                     vm.selecting = false;

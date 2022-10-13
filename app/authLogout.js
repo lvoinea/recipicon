@@ -30,7 +30,7 @@
                 vm.loggedOut = true;
             })
             .catch(function(response){
-                 AlertService.setAlert('ERROR: Could not logout.');
+                 AlertService.setAlert(`ERROR: Could not logout (${error.status})`);
             })
             .finally(function(){
                 vm.loggingOut = false;
