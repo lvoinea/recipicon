@@ -224,9 +224,11 @@
             $urlRouterProvider.otherwise("/login");
             
             //Configure CSRF
+            // NOTE: Both the cookie name and the header are needed
+            // The cookie is used to retrieve the information and then
+            // put it in the header where it is expected by the Django framework.
             $httpProvider.defaults.xsrfCookieName = 'csrftoken';
-            //$httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
-            $httpProvider.defaults.xsrfHeaderName = null;
+            $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
             
     }
 

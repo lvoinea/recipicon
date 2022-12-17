@@ -202,6 +202,8 @@ export SITE_DB=local/db/db.sqlite3
 export DJANGO_SECRET_KEY=1234
 ```
 
+SITE_CONFIG=local/config/site.ini;SITE_DB=local/db/db.sqlite3;DJANGO_SECRET_KEY=1234
+
 Then run de development server:
 
 ```shell script

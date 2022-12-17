@@ -21,8 +21,6 @@ from rest_framework.views import APIView
 from rest_framework.decorators import api_view, authentication_classes
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.authentication import BasicAuthentication
-from rest_framework.renderers import JSONRenderer
 from django.http import JsonResponse
 
 import socket
@@ -37,7 +35,7 @@ site_config = SiteConfig()
 
 @api_view(['POST'])
 @csrf_exempt
-@authentication_classes((CsrfExemptTokenAuthentication, CsrfExemptSessionAuthentication, BasicAuthentication))
+@authentication_classes((CsrfExemptTokenAuthentication, CsrfExemptSessionAuthentication))
 def LoginEp(request):
     username = request.data['username']
     password = request.data['password']
@@ -56,7 +54,7 @@ def LoginEp(request):
 
 @api_view(['POST'])
 @csrf_exempt
-@authentication_classes((CsrfExemptTokenAuthentication, CsrfExemptSessionAuthentication, BasicAuthentication))
+@authentication_classes((CsrfExemptTokenAuthentication, CsrfExemptSessionAuthentication))
 def SignUpEp(request):
 
     sigunpRequest = request.data
@@ -477,12 +475,12 @@ class ShoppingListEp(APIView):
                 shoppingItem.unit = newItem['unit']
                 shoppingItem.quantity = newItem['quantity']                
                 # ingredient items are created if they do not exist already
-                if (newItem['ingredient'] is not None):
+                if ('ingredient' in newItem):
                     shoppingItem.recipe = None
                     shoppingItem.ingredient = Ingredient.objects.get(pk=newItem['ingredient'], user=user)
                 # recipe items have to exist already or an error will be raised
                 # 10.10.2016: this assumes shoppping lists can be edited by adding recipes - currently not used
-                elif (newItem['recipe'] is not None):
+                elif ('recipe' in newItem):
                     shoppingItem.ingredient = None
                     shoppingItem.recipe = get_object_or_404(Recipe, pk=newItem['recipe']['id'])
                 shoppingItem.save()

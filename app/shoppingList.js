@@ -32,6 +32,7 @@
         vm.ingredientInShop = ingredientInShop;
         vm.allIngredientsInLocation = allIngredientsInLocation;
         vm.isItemChecked = isItemChecked;
+        vm.getShoppingListItems = getShoppingListItems;
         
         vm.modalAddLocation = modalAddLocation;
         vm.modalEditLocation = modalEditLocation;
@@ -296,7 +297,12 @@
             }
         }
 
-        
+
+        function getShoppingListItems(type) {
+            const result = vm.shoppingList.items.filter(item => item[type] != null)
+            return result
+        }
+
         //---------------------------------------------- Shops 
         function setShop(){
             vm.selectingShop = true;
