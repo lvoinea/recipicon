@@ -29,7 +29,7 @@ from email.mime.text import MIMEText
 from email.header import Header
 from email.utils import formataddr
 
-site_config = SiteConfig()
+site_config = SiteConfig().config
  
 #{"username":"jhon","password":"papa"} 
 
@@ -132,11 +132,16 @@ def PassResetEp(request):
 
     # Verify token if provided
     # This happens when requesting a reset via email.
-    tokenId = resetRequest.get('token', None)
-    if tokenId:
+    tokenId = resetRequest.get('token', '-')
+    if (tokenId != '-'):
         token = Token.objects.get_or_create(user__username=username)
         if (token[0].key != tokenId):
             return Response('the provided credentials are invalid', status=status.HTTP_401_UNAUTHORIZED)
+        # Update user password
+        user = User.objects.get(username=username)
+        passwordNew = resetRequest.get('passwordNew', None)
+        user.set_password(passwordNew)
+        user.save()
 
     # Always update the token
     # This can be achieved by setting the key on None and then saving it.
@@ -168,9 +173,9 @@ def PassResetRequestEp(request):
 Please follow the link below in order to reset your password:
 
 
-http://%s/app/#/reset/%s/%s
+%s/app/#/reset/%s/%s
 """
-    emailMessage = emailMessage %(site_config['HOST']['serverHttpIp'], username, token[0].key)
+    emailMessage = emailMessage %(site_config['HOST']['serverHttpAddress'], username, token[0].key)
     #print emailMessage
 
     msg = MIMEText(emailMessage)
@@ -184,7 +189,7 @@ http://%s/app/#/reset/%s/%s
     emailServer = smtplib.SMTP(
         socket.gethostbyname(site_config['EMAIL']['serverSmtp']),
         site_config['EMAIL']['serverPort'],
-        socket.gethostbyname('recipicon.com')
+        socket.gethostbyname(site_config['EMAIL']['serverFromAddress'])
     )
     emailServer.starttls()
     emailServer.login(

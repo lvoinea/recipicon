@@ -45,8 +45,8 @@
                 }
                 AuthenticationService.setCredentials(vm.username);
             })
-            .catch(function(response) {               
-                if (response.status == 401){
+            .catch(function(error) {
+                if (error.status == 401){
                    vm.forgot = true;
                 }
                 AlertService.setAlert(`ERROR: Could not login (${error.status})`);
@@ -87,7 +87,7 @@
                 .then(function(response){
                     $location.path('/out');
                 })
-                .catch(function(response){
+                .catch(function(error){
                     AlertService.setAlert(`ERROR: Could not request password reset (${error.status})`);
                 })
                 .finally(function(){
@@ -102,7 +102,7 @@
                 AlertService.setAlert('ERROR: The two passwords do not match.');
                 vm.dataLoading = false;
             } else {
-                AuthenticationService.resetPassword( vm.username, vm.password, vm.passwordNew)
+                AuthenticationService.resetPassword( vm.username, vm.password, vm.passwordNew, vm.token)
                 .then(function(response){
                     $state.go('login',{'username': vm.username})
                 })

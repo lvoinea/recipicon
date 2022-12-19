@@ -121,13 +121,14 @@ The `site.ini` file should have the following structure:
 
 ```shell script
 [HOST]
-serverHttpIp = the IP of the server where the site runs (e.g., 192.168.0.1)
+serverHttpAddress = the address of the server where the site runs (e.g., http://192.168.0.1:8000)
 
 [EMAIL]
 serverSmtp = the host name of the SMTP server (e.g., mail.myserver.com)
 serverPort = SMTP TLS port (e.g., 587)
 serverFromEmail = from email address (e.g., support@recipicon.com)
 serverFromName = from name (e.g., Recipicon Support)
+serverFromAddress = recipicon.technolab.top
 serverPass = SMTP server pass (e.g., MySecretePass)
 ```
 

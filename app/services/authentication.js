@@ -49,10 +49,10 @@
             return defered;
         }
 
-        function resetPassword(username, password, passwordNew) {
+        function resetPassword(username, password, passwordNew, token) {
             var defered;
             $http.defaults.useXDomain = true;
-            defered = $http.post($rootScope.service+'/auth/password-reset', { username, password, passwordNew });
+            defered = $http.post($rootScope.service+'/auth/password-reset', { username, password, passwordNew, token });
             return defered;
         }
 

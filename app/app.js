@@ -164,10 +164,7 @@
             })
 
             .state('reset', {
-                url: '/reset',
-                params: {
-                        'username': '',
-                },
+                url: '/reset/:username/:token',
                 views : {
                     "r-header": {},
                     "r-body": {

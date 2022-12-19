@@ -29,30 +29,21 @@
                 </span>
             </div>
 
-            <!--
-            <div class="form-group" ng-show="vm.mode=='reset'">
-                <label for="reset_email">Email</label>
-                <input type="text" name="reset_email" id="reset_email" c
-                       lass="form-control"
-                       ng-model="vm.username"/>
-            </div>
-            -->
-
             <!-- ---------------------------------------------------------- Passwords -->
 
             <!-- Need to ask for old password in case of password reset -->
             <div class="form-group"
                  ng-class="{ 'has-error': form.password.$dirty && form.password.$error.required }"
-                 ng-show="(vm.mode=='signup') || (vm.mode=='signin') || (vm.mode=='reset')">
+                 ng-show="(vm.mode==='signup') || (vm.mode==='signin') || ((vm.mode==='reset') && (vm.token==='-'))">
 
                 <label for="password">
-                    <span ng-show="(vm.mode=='reset')">Old password</span>
-                    <span ng-show="(vm.mode!='reset')">Password</span>
+                    <span ng-show="(vm.mode==='reset')">Old password</span>
+                    <span ng-show="(vm.mode!=='reset')">Password</span>
                 </label>
                 <input type="password" name="password" id="password"
                        class="form-control"
                        ng-model="vm.password"
-                       required/>
+                       />
 
                 <span ng-show="form.password.$dirty && form.password.$error.required" class="help-block">
                     Password is required
@@ -61,7 +52,7 @@
 
             <!-- New password (in case of reset) -->
             <div class="form-group"
-                 ng-show="(vm.mode=='reset')">
+                 ng-show="(vm.mode==='reset')">
 
                 <label for="password_new">
                     New password
@@ -79,11 +70,11 @@
             <!-- Password confirmation (in case of sign-up or reset) -->
             <div class="form-group"
                  ng-class="{ 'has-error': form.confirm_password.$dirty && (vm.password != vm.confirmPassword) }"
-                 ng-show="(vm.mode=='signup') || (vm.mode=='reset')">
+                 ng-show="(vm.mode==='signup') || (vm.mode==='reset')">
 
                 <label for="confirm_password">
-                    <span ng-show="(vm.mode=='reset')">Confirm new password</span>
-                    <span ng-show="(vm.mode!='reset')">Confirm password</span>
+                    <span ng-show="(vm.mode==='reset')">Confirm new password</span>
+                    <span ng-show="(vm.mode!=='reset')">Confirm password</span>
                 </label>
                 <input type="password" name="confirm_password" id="confirm_password" class="form-control"
                        ng-model="vm.confirmPassword"
@@ -92,7 +83,7 @@
                 <span ng-show="(vm.password!=vm.confirmPassword) && (vm.mode!='reset')" class="help-block">
                     Passwords should be identical.
                 </span>
-                <span ng-show="(vm.passwordNew!=vm.confirmPassword) && (vm.mode=='reset')" class="help-block">
+                <span ng-show="(vm.passwordNew!=vm.confirmPassword) && (vm.mode==='reset')" class="help-block">
                     Passwords should be identical.
                 </span>
                 <span ng-show="form.confirm_password.$dirty && !form.confirm_password.$valid" class="help-block">
@@ -101,14 +92,14 @@
             </div>
 
             <!-- ---------------------------------------------------- Terms of service -->
-            <div class="form-group" ng-show="(vm.mode=='signup')">
+            <div class="form-group" ng-show="(vm.mode==='signup')">
                 <input type="checkbox" ng-model="vm.agreement"/>
                 <span>I have read and I accept the service <a ng-click="vm.modalTerms()">terms and conditions</a>.</span>
             </div>
 
             <div class="form-actions">
                 <!-- ---------------------------------------------------------- Log in -->
-                <div align="center" ng-show="vm.mode == 'signin'">
+                <div align="center" ng-show="vm.mode === 'signin'">
                     <p>
                         <button ng-disabled="form.$invalid || vm.dataLoading" class="btn btn-primary" ng-click="vm.login()">
                             Login
@@ -120,7 +111,7 @@
                     </p>
                 </div>
                 <!-- ---------------------------------------------------------- Sign up -->
-                 <div align="center" ng-show="vm.mode == 'signup'">
+                 <div align="center" ng-show="vm.mode === 'signup'">
                      <p>
                         <button ng-disabled="form.$invalid || vm.dataLoading" class="btn btn-primary" ng-click="vm.signup()">
                             Sign-up
@@ -132,7 +123,7 @@
                     </p>
                 </div>
                 <!-- ---------------------------------------------------------- Send password reset request -->
-                 <div align="center" ng-show="vm.mode == 'request'">
+                 <div align="center" ng-show="vm.mode === 'request'">
                      <p>
                         <button ng-disabled="form.$invalid || vm.dataLoading" class="btn btn-primary" ng-click="vm.requestPasswordRequest()">
                             Send pasword reset request
@@ -144,7 +135,7 @@
                     </p>                        
                 </div>
                 <!-- ---------------------------------------------------------- Reset password -->
-                <div align="center" ng-show="vm.mode == 'reset'">
+                <div align="center" ng-show="vm.mode === 'reset'">
                      <p>
                         <button ng-disabled="form.$invalid || vm.dataLoading" class="btn btn-primary" ng-click="vm.resetPassword()">
                             Reset password
