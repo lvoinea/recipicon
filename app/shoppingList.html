@@ -3,7 +3,7 @@
 </div>
 <div ng-if="!vm.isLoading()">
     <h3 class="text-center">
-        Shopping list {{vm.shoppingList.name}} </br>
+        Shopping list <span ng-if="vm.shoppingList.name!==''">"{{vm.shoppingList.name}}"</span> </br>
         <small>{{vm.shoppingList.date}}</small>
     </h3>
      <div class="panel">

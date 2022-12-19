@@ -3,7 +3,7 @@
 </div>
 <div ng-if="!vm.isLoading()">
     <h3 class="text-center">
-        Edit shopping list {{vm.shoppingList.name}} </br>
+        Edit shopping list <span ng-if="vm.shoppingList.name!==''">"{{vm.shoppingList.name}}"</span> </br>
         <small>({{vm.shoppingList.date}})</small>
     </h3>
     <form name="shoppingList" ng-submit="" role="form" novalidate>
@@ -22,7 +22,7 @@
             </div>
             <div class="panel-body">
                 <ul>
-                    <li ng-repeat="item in vm.shoppingList.items | filter:{ingredient:null}">
+                    <li ng-repeat="item in vm.getShoppingListItems('recipe')">
                        <a ng-click="vm.deleteItem(item.id)"><span style="color:#ff471a;font-size:0.75em;" class="glyphicon glyphicon glyphicon-minus-sign selectable"></span></a>
                        <input type="number" min="0" max="99999" ng-model="item.quantity" pattern="\d*">
                        {{item.recipe.name}}
@@ -38,7 +38,7 @@
             </div>
             <div class="panel-body">
                 <ul>
-                    <li ng-repeat="item in vm.shoppingList.items | filter:{recipe:null}">
+                    <li ng-repeat="item in vm.getShoppingListItems('ingredient')">
                          <a ng-click="vm.deleteItem(item.id)">
                          <span style="color:#ff471a;font-size:0.75em;" class="glyphicon glyphicon glyphicon-minus-sign selectable"></span></a>
                         {{vm.ingredients[item.ingredient].name}} ( {{item.quantity}} {{item.unit}} )

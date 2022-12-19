@@ -10,11 +10,8 @@
         var vm = this;
 
         vm.username =  $rootScope.auth['user'];
-        vm.token =  $rootScope.auth['token'];
-        
         vm.closeUp = closeUp;
         vm.clearAlert = AlertService.clearAlert;
-
         vm.closingOut = false;
         
         function closeUp() {
@@ -28,7 +25,7 @@
                 $location.path('/login');
             })
             .catch(function(response){
-                 AlertService.setAlert('ERROR: Could not close up account.');
+                 AlertService.setAlert(`ERROR: Could not close up account (${error.status})`);
             })
             .finally(function(){
                 vm.closingOut = false;

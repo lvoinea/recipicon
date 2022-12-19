@@ -21,8 +21,6 @@ from rest_framework.views import APIView
 from rest_framework.decorators import api_view, authentication_classes
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.authentication import BasicAuthentication
-from rest_framework.renderers import JSONRenderer
 from django.http import JsonResponse
 
 import socket
@@ -31,13 +29,13 @@ from email.mime.text import MIMEText
 from email.header import Header
 from email.utils import formataddr
 
-site_config = SiteConfig()
+site_config = SiteConfig().config
  
 #{"username":"jhon","password":"papa"} 
 
 @api_view(['POST'])
 @csrf_exempt
-@authentication_classes((CsrfExemptTokenAuthentication, CsrfExemptSessionAuthentication, BasicAuthentication))
+@authentication_classes((CsrfExemptTokenAuthentication, CsrfExemptSessionAuthentication))
 def LoginEp(request):
     username = request.data['username']
     password = request.data['password']
@@ -56,7 +54,7 @@ def LoginEp(request):
 
 @api_view(['POST'])
 @csrf_exempt
-@authentication_classes((CsrfExemptTokenAuthentication, CsrfExemptSessionAuthentication, BasicAuthentication))
+@authentication_classes((CsrfExemptTokenAuthentication, CsrfExemptSessionAuthentication))
 def SignUpEp(request):
 
     sigunpRequest = request.data
@@ -134,11 +132,16 @@ def PassResetEp(request):
 
     # Verify token if provided
     # This happens when requesting a reset via email.
-    tokenId = resetRequest.get('token', None)
-    if tokenId:
+    tokenId = resetRequest.get('token', '-')
+    if (tokenId != '-'):
         token = Token.objects.get_or_create(user__username=username)
         if (token[0].key != tokenId):
             return Response('the provided credentials are invalid', status=status.HTTP_401_UNAUTHORIZED)
+        # Update user password
+        user = User.objects.get(username=username)
+        passwordNew = resetRequest.get('passwordNew', None)
+        user.set_password(passwordNew)
+        user.save()
 
     # Always update the token
     # This can be achieved by setting the key on None and then saving it.
@@ -170,9 +173,9 @@ def PassResetRequestEp(request):
 Please follow the link below in order to reset your password:
 
 
-http://%s/app/#/reset/%s/%s
+%s/app/#/reset/%s/%s
 """
-    emailMessage = emailMessage %(site_config['HOST']['serverHttpIp'], username, token[0].key)
+    emailMessage = emailMessage %(site_config['HOST']['serverHttpAddress'], username, token[0].key)
     #print emailMessage
 
     msg = MIMEText(emailMessage)
@@ -186,7 +189,7 @@ http://%s/app/#/reset/%s/%s
     emailServer = smtplib.SMTP(
         socket.gethostbyname(site_config['EMAIL']['serverSmtp']),
         site_config['EMAIL']['serverPort'],
-        socket.gethostbyname('recipicon.com')
+        socket.gethostbyname(site_config['EMAIL']['serverFromAddress'])
     )
     emailServer.starttls()
     emailServer.login(
@@ -477,12 +480,12 @@ class ShoppingListEp(APIView):
                 shoppingItem.unit = newItem['unit']
                 shoppingItem.quantity = newItem['quantity']                
                 # ingredient items are created if they do not exist already
-                if (newItem['ingredient'] is not None):
+                if ('ingredient' in newItem):
                     shoppingItem.recipe = None
                     shoppingItem.ingredient = Ingredient.objects.get(pk=newItem['ingredient'], user=user)
                 # recipe items have to exist already or an error will be raised
                 # 10.10.2016: this assumes shoppping lists can be edited by adding recipes - currently not used
-                elif (newItem['recipe'] is not None):
+                elif ('recipe' in newItem):
                     shoppingItem.ingredient = None
                     shoppingItem.recipe = get_object_or_404(Recipe, pk=newItem['recipe']['id'])
                 shoppingItem.save()

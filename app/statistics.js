@@ -3,9 +3,9 @@
     
     angular.module('app').controller('StatsController', StatsController);
     
-    StatsController.$inject = ['DataService','$log'];
+    StatsController.$inject = ['AlertService', 'AuthenticationService', 'DataService','$log'];
 
-    function StatsController(DataService,$log){
+    function StatsController(AlertService, AuthenticationService, DataService, $log){
         var vm = this;
         var colors = ['#8dd3c7','#ffffb3','#bebada','#fb8072','#80b1d3','#fdb462','#b3de69'];
         
@@ -31,7 +31,12 @@
                     showIngredients('#ingredientsStatPanel');
                 })
                 .catch(function(error){
-                    $log.error('Could not load recipe list');
+                if (error.status == 403){
+                    AuthenticationService.ensureAuthorized();
+                    }
+                    else {
+                        AlertService.setAlert(`ERROR: Could not load user stats (${error.status})`);
+                    }
                 })
                 .finally(function(){
                     vm.loading = false;

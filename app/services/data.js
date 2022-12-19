@@ -431,6 +431,7 @@
             });
             return deferred;
         }
+
         //--------------------------------------------- Statistics
         function getStats(){
             var deferred;
